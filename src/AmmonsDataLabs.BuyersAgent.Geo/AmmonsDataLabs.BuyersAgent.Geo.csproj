@@ -4,13 +4,7 @@
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <AssemblyName>AmmonsDatalabs.BuyersAgent.Flood</AssemblyName>
-    <RootNamespace>AmmonsDataLabs.BuyersAgent.Flood</RootNamespace>
   </PropertyGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\AmmonsDataLabs.BuyersAgent.Geo\AmmonsDataLabs.BuyersAgent.Geo.csproj" />
-  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="NetTopologySuite" Version="2.6.0" />
