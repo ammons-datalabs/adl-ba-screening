@@ -1,4 +1,4 @@
 rules: ["rules.md"]
-model: "claude-3.7-sonnet-code"              # or your preferred default
+model: "claude-opus-4-5-20251101"            # or your preferred default
 editor_integration: false               # Rider doesn't use Claude inline edits
 apply_diffs: false

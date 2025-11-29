@@ -23,8 +23,8 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
                 services.Remove(descriptor);
             }
             
-            // Add test stub
-            services.AddSingleton<IFloodScreeningService, TestFloodScreeningService>();
+            // Add deterministic stub for testing
+            services.AddSingleton<IFloodScreeningService, StubFloodScreeningService>();
         });
     }
 }

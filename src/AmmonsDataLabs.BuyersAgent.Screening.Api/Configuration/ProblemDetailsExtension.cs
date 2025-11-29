@@ -43,7 +43,7 @@ public static class ProblemDetailsExtensions
                     Title =  "An unexpected error occurred",
                     Detail =  environment.IsDevelopment()
                         ? exception?.Message
-                        : "Please try again later or contect support",
+                        : "Please try again later or contact support",
                     Extensions = { ["traceId"] = context.TraceIdentifier }
                 };
 

@@ -9,9 +9,10 @@ namespace AmmonsDataLabs.BuyersAgent.Screening.Api.Tests;
 
 public class FloodEndpointTests(CustomWebApplicationFactory factory) : IClassFixture<CustomWebApplicationFactory>
 {
-    private const string Address1 = "123 Fake Street, Brisbane QLD";
-    private const string Address2 = "456 Main Road, Mount Gravatt QLD";
-    
+    private const string StreetAddress = "123 Fake Street, Brisbane QLD";
+    private const string MainRoadAddress = "456 Main Road, Mount Gravatt QLD";
+    private const string UnknownAddress = "789 Unknown Avenue, Sydney NSW";
+
     private readonly HttpClient _client = factory.CreateClient();
     private readonly JsonSerializerOptions _jsonOptions = new()
     {
@@ -20,35 +21,138 @@ public class FloodEndpointTests(CustomWebApplicationFactory factory) : IClassFix
     };
 
     [Fact]
-    public async Task FloodLookup_ReturnsResults_WithUnknownRisk()
+    public async Task FloodLookup_StreetAddress_ReturnsLowRisk()
+    {
+        // Arrange
+        var payload = new FloodLookupRequest
+        {
+            Properties = [new FloodLookupItem { Address = StreetAddress }]
+        };
+
+        // Act
+        var response = await _client.PostAsJsonAsync("/api/screening/flood/lookup", payload);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        var body = await response.Content.ReadFromJsonAsync<FloodLookupResponse>(_jsonOptions);
+        Assert.NotNull(body);
+        Assert.Single(body.Results);
+
+        var result = body.Results[0];
+        Assert.Equal(StreetAddress, result.Address);
+        Assert.Equal(FloodRisk.Low, result.Risk);
+        Assert.NotNull(result.Reasons);
+        Assert.NotEmpty(result.Reasons);
+    }
+
+    [Fact]
+    public async Task FloodLookup_MainRoadAddress_ReturnsHighRisk()
+    {
+        // Arrange
+        var payload = new FloodLookupRequest
+        {
+            Properties = [new FloodLookupItem { Address = MainRoadAddress }]
+        };
+
+        // Act
+        var response = await _client.PostAsJsonAsync("/api/screening/flood/lookup", payload);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        var body = await response.Content.ReadFromJsonAsync<FloodLookupResponse>(_jsonOptions);
+        Assert.NotNull(body);
+        Assert.Single(body.Results);
+
+        var result = body.Results[0];
+        Assert.Equal(MainRoadAddress, result.Address);
+        Assert.Equal(FloodRisk.High, result.Risk);
+        Assert.NotNull(result.Reasons);
+        Assert.NotEmpty(result.Reasons);
+    }
+
+    [Fact]
+    public async Task FloodLookup_UnknownAddress_ReturnsUnknownRisk()
+    {
+        // Arrange
+        var payload = new FloodLookupRequest
+        {
+            Properties = [new FloodLookupItem { Address = UnknownAddress }]
+        };
+
+        // Act
+        var response = await _client.PostAsJsonAsync("/api/screening/flood/lookup", payload);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        var body = await response.Content.ReadFromJsonAsync<FloodLookupResponse>(_jsonOptions);
+        Assert.NotNull(body);
+        Assert.Single(body.Results);
+
+        var result = body.Results[0];
+        Assert.Equal(UnknownAddress, result.Address);
+        Assert.Equal(FloodRisk.Unknown, result.Risk);
+    }
+
+    [Fact]
+    public async Task FloodLookup_MultipleAddresses_ReturnsMappedResults()
     {
         // Arrange
         var payload = new FloodLookupRequest
         {
             Properties =
             [
-                new FloodLookupItem { Address = Address1 },
-                new FloodLookupItem { Address = Address2 }
+                new FloodLookupItem { Address = StreetAddress },
+                new FloodLookupItem { Address = MainRoadAddress },
+                new FloodLookupItem { Address = UnknownAddress }
             ]
         };
-        
+
         // Act
-        HttpResponseMessage response = await _client.PostAsJsonAsync("/api/screening/flood/lookup", payload);
+        var response = await _client.PostAsJsonAsync("/api/screening/flood/lookup", payload);
 
         // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
-        FloodLookupResponse? body = await response.Content.ReadFromJsonAsync<FloodLookupResponse>(_jsonOptions);
+        var body = await response.Content.ReadFromJsonAsync<FloodLookupResponse>(_jsonOptions);
         Assert.NotNull(body);
-        Assert.Equal(2, body.Results.Count);
+        Assert.Equal(3, body.Results.Count);
 
-        FloodLookupResult firstResult = body.Results[0];
-        Assert.Equal(Address1, firstResult.Address);
-        Assert.Equal(FloodRisk.Unknown, firstResult.Risk);
+        Assert.Equal(FloodRisk.Low, body.Results[0].Risk);
+        Assert.Equal(FloodRisk.High, body.Results[1].Risk);
+        Assert.Equal(FloodRisk.Unknown, body.Results[2].Risk);
+    }
 
-        FloodLookupResult secondResult = body.Results[1];
-        Assert.Equal(Address2, secondResult.Address);
-        Assert.Equal(FloodRisk.Unknown, secondResult.Risk);
+    [Fact]
+    public async Task FloodLookup_ResponseHasNonNullReasons()
+    {
+        // Arrange
+        var payload = new FloodLookupRequest
+        {
+            Properties =
+            [
+                new FloodLookupItem { Address = StreetAddress },
+                new FloodLookupItem { Address = MainRoadAddress }
+            ]
+        };
+
+        // Act
+        var response = await _client.PostAsJsonAsync("/api/screening/flood/lookup", payload);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        var body = await response.Content.ReadFromJsonAsync<FloodLookupResponse>(_jsonOptions);
+        Assert.NotNull(body);
+
+        Assert.All(body.Results, result =>
+        {
+            Assert.NotNull(result.Address);
+            Assert.NotEmpty(result.Address);
+            Assert.NotNull(result.Reasons);
+        });
     }
 
     [Fact]
@@ -61,13 +165,12 @@ public class FloodEndpointTests(CustomWebApplicationFactory factory) : IClassFix
         };
 
         // Act
-        HttpResponseMessage response = await _client.PostAsJsonAsync("/api/screening/flood/lookup", payload);
+        var response = await _client.PostAsJsonAsync("/api/screening/flood/lookup", payload);
 
         // Assert
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
 
-        HttpValidationProblemDetails? problem =
-            await response.Content.ReadFromJsonAsync<HttpValidationProblemDetails>(_jsonOptions);
+        var problem = await response.Content.ReadFromJsonAsync<HttpValidationProblemDetails>(_jsonOptions);
         Assert.NotNull(problem);
         Assert.True(problem.Errors.ContainsKey("properties"));
     }
