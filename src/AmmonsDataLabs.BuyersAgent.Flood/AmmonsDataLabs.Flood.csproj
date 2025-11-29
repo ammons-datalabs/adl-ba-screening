@@ -8,4 +8,8 @@
     <RootNamespace>AmmonsDataLabs.BuyersAgent.Flood</RootNamespace>
   </PropertyGroup>
 
+  <ItemGroup>
+    <Folder Include="Services\" />
+  </ItemGroup>
+
 </Project>

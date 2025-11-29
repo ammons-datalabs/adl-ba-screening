@@ -18,7 +18,8 @@ builder.Services.ConfigureHttpJsonOptions(options =>
     options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
 });
 
-builder.Services.AddScoped<IFloodScreeningService, PlaceholderFloodScreeningService>();
+builder.Services.AddScoped<IFloodDataProvider, SimpleFloodDataProvider>();
+builder.Services.AddScoped<IFloodScreeningService, FloodScreeningService>();
 
 var app = builder.Build();
 

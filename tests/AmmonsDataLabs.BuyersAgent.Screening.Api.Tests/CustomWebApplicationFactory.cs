@@ -16,7 +16,7 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
         {
             // Remove any IFloodScreeningService registration
             var descriptor = services.SingleOrDefault(d => 
-                d.ServiceType == typeof(IFloodScreeningService));
+                d.ServiceType == typeof(IFloodDataProvider));
 
             if (descriptor is not null)
             {
@@ -24,7 +24,7 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
             }
             
             // Add deterministic stub for testing
-            services.AddSingleton<IFloodScreeningService, StubFloodScreeningService>();
+            services.AddSingleton<IFloodDataProvider, StubFloodDataProvider>();
         });
     }
 }

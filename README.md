@@ -2,6 +2,9 @@
 
 Buyer's Agent property screening API for Ammons Data Labs. Provides flood risk assessment and other property screening services for Queensland properties.
 
+[![CI](https://github.com/AmmonsDataLabs/adl-ba-screening/actions/workflows/ci.yml/badge.svg)](https://github.com/AmmonsDataLabs/adl-ba-screening/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/AmmonsDataLabs/adl-ba-screening/branch/main/graph/badge.svg)](https://codecov.io/gh/AmmonsDataLab
+s/adl-ba-screening)
 ## Projects
 
 - **AmmonsDataLabs.BuyersAgent.Flood** - Flood screening domain (contracts + DTOs)
@@ -30,6 +33,19 @@ dotnet run --project src/AmmonsDataLabs.BuyersAgent.Screening.Api
 
 The API will be available at `http://localhost:5136`
 
+## Docker
+
+```bash
+# Build the image
+docker build -t adl-ba-screening .
+
+# Run the container
+docker run --rm -p 8080:8080 adl-ba-screening
+
+# Test it
+curl http://localhost:8080/health
+```
+
 ## API Usage
 
 ### Health Check
@@ -47,7 +63,8 @@ Content-Type: application/json
 {
   "properties": [
     { "address": "123 Fake Street, Brisbane QLD" },
-    { "address": "456 Main Road, Mount Gravatt QLD" }
+    { "address": "456 Main Road, Mount Gravatt QLD" },
+    { "address": "10 Oxley Creek Road, Oxley QLD" }
   ]
 }
 ```
@@ -59,13 +76,18 @@ Content-Type: application/json
   "results": [
     {
       "address": "123 Fake Street, Brisbane QLD",
-      "risk": "Unknown",
-      "reasons": ["Flood screening not yet implemented."]
+      "risk": "Low",
+      "reasons": ["No known flood indicators (demo rule - pending real flood data)."]
     },
     {
       "address": "456 Main Road, Mount Gravatt QLD",
-      "risk": "Unknown",
-      "reasons": ["Flood screening not yet implemented."]
+      "risk": "High",
+      "reasons": ["Near major road (demo rule - pending real flood data)."]
+    },
+    {
+      "address": "10 Oxley Creek Road, Oxley QLD",
+      "risk": "Medium",
+      "reasons": ["Near waterway (demo rule - pending real flood data)."]
     }
   ]
 }
@@ -95,14 +117,38 @@ adl-ba-screening/
 │   │   ├── FloodLookupResponse.cs
 │   │   ├── FloodLookupResult.cs
 │   │   ├── FloodLookupItem.cs
-│   │   └── IFloodScreeningService.cs
+│   │   ├── IFloodScreeningService.cs
+│   │   └── IFloodDataProvider.cs
 │   └── AmmonsDataLabs.BuyersAgent.Screening.Api/   # Minimal API
 │       ├── Endpoints/
 │       ├── Services/
+│       │   ├── FloodScreeningService.cs
+│       │   └── SimpleFloodDataProvider.cs
 │       └── Program.cs
-└── tests/
-    ├── AmmonsDataLabs.BuyersAgent.Flood.Tests/     # Domain unit tests
-    └── AmmonsDataLabs.BuyersAgent.Screening.Api.Tests/  # API integration tests
+├── tests/
+│   ├── AmmonsDataLabs.BuyersAgent.Flood.Tests/
+│   └── AmmonsDataLabs.BuyersAgent.Screening.Api.Tests/
+└── .github/
+    └── workflows/
+        └── ci.yml
+```
+
+## Architecture
+
+```
+FloodEndpoints
+      │
+      ▼
+IFloodScreeningService
+      │
+      ▼
+FloodScreeningService
+      │
+      ▼
+IFloodDataProvider
+      │
+      ├── SimpleFloodDataProvider (v0 demo rules)
+      └── QldFloodDataProvider (future - real data)
 ```
 
 ## Testing
@@ -113,6 +159,10 @@ dotnet test
 
 # Run tests with coverage
 dotnet test --collect:"XPlat Code Coverage"
+
+# Run in Release mode (CI style)
+dotnet build --configuration Release
+dotnet test --configuration Release --no-build
 ```
 
 ## Development
@@ -133,16 +183,28 @@ The project includes an `Api.http` file for testing endpoints in Rider/Visual St
 
 | Risk | Description |
 |------|-------------|
-| `Unknown` | Risk level could not be determined |
 | `Low` | Low flood risk |
 | `Medium` | Medium flood risk |
 | `High` | High flood risk |
+| `Unknown` | Risk level could not be determined |
+
+## Current Implementation (v0)
+
+The current `SimpleFloodDataProvider` uses address pattern matching as a temporary stand-in for real flood data:
+
+| Pattern in Address | Risk |
+|-------------------|------|
+| Main Rd, Main Road, Motorway, Highway | High |
+| Ck, Creek, River | Medium |
+| (no match) | Low |
+
+This will be replaced with `QldFloodDataProvider` when real council/GIS flood data is integrated.
 
 ## Future Screening Types
 
 The API is designed to support additional screening types:
 
-- Position assessment
+- Position assessment (heuristic-based scoring)
 
 ## License
 
