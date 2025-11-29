@@ -1,0 +1,34 @@
+@Api_HostAddress = http://localhost:5136
+
+### Health check
+GET {{Api_HostAddress}}/health
+
+### Flood lookup - multiple properties
+POST {{Api_HostAddress}}/api/screening/flood/lookup
+Content-Type: application/json
+
+{
+"properties": [
+  { "address": "123 Fake Street, Brisbane QLD" },
+  { "address": "456 Main Road, Mount Gravatt QLD" }
+]
+}
+
+### Flood lookup - single property
+POST {{Api_HostAddress}}/api/screening/flood/lookup
+Content-Type: application/json
+
+{
+"properties": [
+  { "address": "10 River Terrace, Auchenflower QLD" }
+]
+}
+
+### Flood lookup - empty list (should return 400)
+POST {{Api_HostAddress}}/api/screening/flood/lookup
+Content-Type: application/json
+
+{
+"properties": []
+}
+###

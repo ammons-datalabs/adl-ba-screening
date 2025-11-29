@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>AmmonsDataLabs.BuyersAgent.Screening.Api</AssemblyName>
+    <RootNamespace>AmmonsDataLabs.BuyersAgent.Screening.Api</RootNamespace>
+    <UserSecretsId>c14ceb17-e83f-4e26-a856-e30032343357</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.22" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\AmmonsDataLabs.BuyersAgent.Flood\AmmonsDataLabs.Flood.csproj" />
+  </ItemGroup>
+
+</Project>
