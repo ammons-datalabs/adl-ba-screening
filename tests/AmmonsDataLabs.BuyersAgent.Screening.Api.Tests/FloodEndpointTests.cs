@@ -30,7 +30,7 @@ public class FloodEndpointTests(CustomWebApplicationFactory factory) : IClassFix
         };
 
         // Act
-        var response = await _client.PostAsJsonAsync("/api/screening/flood/lookup", payload);
+        var response = await _client.PostAsJsonAsync("/v1/screening/flood/lookup", payload);
 
         // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -56,7 +56,7 @@ public class FloodEndpointTests(CustomWebApplicationFactory factory) : IClassFix
         };
 
         // Act
-        var response = await _client.PostAsJsonAsync("/api/screening/flood/lookup", payload);
+        var response = await _client.PostAsJsonAsync("/v1/screening/flood/lookup", payload);
 
         // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -82,7 +82,7 @@ public class FloodEndpointTests(CustomWebApplicationFactory factory) : IClassFix
         };
 
         // Act
-        var response = await _client.PostAsJsonAsync("/api/screening/flood/lookup", payload);
+        var response = await _client.PostAsJsonAsync("/v1/screening/flood/lookup", payload);
 
         // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -111,7 +111,7 @@ public class FloodEndpointTests(CustomWebApplicationFactory factory) : IClassFix
         };
 
         // Act
-        var response = await _client.PostAsJsonAsync("/api/screening/flood/lookup", payload);
+        var response = await _client.PostAsJsonAsync("/v1/screening/flood/lookup", payload);
 
         // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -139,7 +139,7 @@ public class FloodEndpointTests(CustomWebApplicationFactory factory) : IClassFix
         };
 
         // Act
-        var response = await _client.PostAsJsonAsync("/api/screening/flood/lookup", payload);
+        var response = await _client.PostAsJsonAsync("/v1/screening/flood/lookup", payload);
 
         // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -165,7 +165,7 @@ public class FloodEndpointTests(CustomWebApplicationFactory factory) : IClassFix
         };
 
         // Act
-        var response = await _client.PostAsJsonAsync("/api/screening/flood/lookup", payload);
+        var response = await _client.PostAsJsonAsync("/v1/screening/flood/lookup", payload);
 
         // Assert
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);

@@ -21,7 +21,7 @@ using System.Net;
               Properties = [new FloodLookupItem { Address = "Any Address" }]
           };
 
-          var response = await _client.PostAsJsonAsync("/api/screening/flood/lookup", payload);
+          var response = await _client.PostAsJsonAsync("/v1/screening/flood/lookup", payload);
 
           Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
           Assert.Equal("application/problem+json", response.Content.Headers.ContentType?.MediaType);

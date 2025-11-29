@@ -6,7 +6,7 @@ public static class FloodEndpoints
 {
     public static IEndpointRouteBuilder MapFloodEndpoints(this IEndpointRouteBuilder app)
     {
-        app.MapPost("/api/screening/flood/lookup", async (
+        app.MapPost("/v1/screening/flood/lookup", async (
                 FloodLookupRequest req,
                 IFloodScreeningService svc,
                 CancellationToken ct) =>

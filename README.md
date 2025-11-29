@@ -15,7 +15,7 @@ Buyer's Agent property screening API for Ammons Data Labs. Provides flood risk a
 | Method | Path | Description |
 |--------|------|-------------|
 | GET | `/health` | Health check |
-| POST | `/api/screening/flood/lookup` | Batch flood risk lookup |
+| POST | `/v1/screening/flood/lookup` | Batch flood risk lookup |
 
 ## Quickstart
 
@@ -56,7 +56,7 @@ GET http://localhost:5136/health
 ### Flood Lookup
 
 ```http
-POST http://localhost:5136/api/screening/flood/lookup
+POST http://localhost:5136/v1/screening/flood/lookup
 Content-Type: application/json
 
 {
