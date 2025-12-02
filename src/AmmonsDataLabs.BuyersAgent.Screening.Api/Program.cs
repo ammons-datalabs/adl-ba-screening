@@ -28,7 +28,7 @@ var useGisProvider = builder.Configuration.GetValue<bool>("Flood:UseGisProvider"
 if (useGisProvider)
 {
     // GIS-based flood data provider with geocoding and zone lookup
-    builder.Services.AddSingleton<IGeocodingService, DummyGeocodingService>();
+    builder.Services.AddGeocoding(builder.Configuration);
     builder.Services.AddSingleton<IFloodZoneDataLoader, NdjsonFloodZoneDataLoader>();
     builder.Services.AddSingleton<IFloodZoneIndex, BccFloodZoneIndex>();
     builder.Services.AddScoped<IFloodDataProvider, GisFloodDataProvider>();

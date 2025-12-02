@@ -18,4 +18,10 @@
     <ProjectReference Include="..\AmmonsDataLabs.BuyersAgent.Flood\AmmonsDataLabs.Flood.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Content Update="Data\addresses.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
 </Project>

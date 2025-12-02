@@ -25,6 +25,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\AmmonsDataLabs.BuyersAgent.Flood\AmmonsDataLabs.Flood.csproj" />
+    <ProjectReference Include="..\..\src\AmmonsDataLabs.BuyersAgent.Geo\AmmonsDataLabs.BuyersAgent.Geo.csproj" />
     <ProjectReference Include="..\..\src\AmmonsDataLabs.BuyersAgent.Screening.Api\AmmonsDataLabs.BuyersAgent.Screening.Api.csproj" />
   </ItemGroup>
 

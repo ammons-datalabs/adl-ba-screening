@@ -79,6 +79,21 @@ public class FloodLookupGisIntegrationTests
             var ntsPoint = GeoFactory.CreatePoint(point);
             return _zone.Geometry.Contains(ntsPoint) ? _zone : null;
         }
+
+        public FloodZoneHit? FindNearestZone(GeoPoint point, double maxDistanceMetres)
+        {
+            var ntsPoint = GeoFactory.CreatePoint(point);
+            if (_zone.Geometry.Contains(ntsPoint))
+            {
+                return new FloodZoneHit
+                {
+                    Zone = _zone,
+                    DistanceMetres = 0,
+                    Proximity = FloodZoneProximity.Inside
+                };
+            }
+            return null;
+        }
     }
 
     [Fact]
@@ -101,7 +116,7 @@ public class FloodLookupGisIntegrationTests
     }
 
     [Fact]
-    public async Task Lookup_ReturnsLowRiskWhenOutsideZone()
+    public async Task Lookup_ReturnsNoneRiskWhenOutsideZone()
     {
         await using var factory = new GisTestFactory().WithWebHostBuilder(builder =>
         {
@@ -136,8 +151,8 @@ public class FloodLookupGisIntegrationTests
 
         var content = await response.Content.ReadAsStringAsync();
 
-        // Outside zone should be unknown risk (no zone found)
-        Assert.Contains("Unknown", content);
+        // Outside zone should be None risk (successfully checked, no zone found)
+        Assert.Contains("None", content);
         Assert.Contains("No flood zone found", content);
     }
 

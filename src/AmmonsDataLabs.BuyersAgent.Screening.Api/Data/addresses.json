@@ -1,0 +1,32 @@
+[
+  {
+    "address": "117 Fernberg Road, Paddington QLD 4064",
+    "lat": -27.4626095,
+    "lon": 152.9953503
+  },
+  {
+    "address": "118 Fernberg Road, Paddington QLD 4064",
+    "lat": -27.4631064,
+    "lon": 152.9952003
+  },
+  {
+    "address": "241 Horizon Drive, Westlake QLD 4074",
+    "lat": -27.5491928,
+    "lon": 152.9106459
+  },
+  {
+    "address": "3/241 Horizon Drive, Westlake QLD 4074",
+    "lat": -27.5491928,
+    "lon": 152.9106459
+  },
+  {
+    "address": "100 Eagle Street, Brisbane CBD QLD 4000",
+    "lat": -27.467317,
+    "lon": 153.0295165
+  },
+  {
+    "address": "1 William Street, Brisbane City QLD 4000",
+    "lat": -27.4752099,
+    "lon": 153.025793
+  }
+]

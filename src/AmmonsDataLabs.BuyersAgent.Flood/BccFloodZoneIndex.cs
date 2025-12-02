@@ -20,6 +20,12 @@ public sealed class BccFloodZoneIndex(
         return _inner!.FindZoneForPoint(point);
     }
 
+    public FloodZoneHit? FindNearestZone(GeoPoint point, double maxDistanceMetres)
+    {
+        EnsureLoaded();
+        return _inner!.FindNearestZone(point, maxDistanceMetres);
+    }
+
     private void EnsureLoaded()
     {
         if (_inner is not null)

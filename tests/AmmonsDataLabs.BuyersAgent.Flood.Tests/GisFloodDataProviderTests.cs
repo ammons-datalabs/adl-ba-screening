@@ -38,6 +38,19 @@ public class GisFloodDataProviderTests
         public StubFloodZoneIndex(FloodZone? zone) => _zone = zone;
 
         public FloodZone? FindZoneForPoint(GeoPoint point) => _zone;
+
+        public FloodZoneHit? FindNearestZone(GeoPoint point, double maxDistanceMetres)
+        {
+            if (_zone is null)
+                return null;
+
+            return new FloodZoneHit
+            {
+                Zone = _zone,
+                DistanceMetres = 0,
+                Proximity = FloodZoneProximity.Inside
+            };
+        }
     }
 
     [Fact]
@@ -81,7 +94,7 @@ public class GisFloodDataProviderTests
     }
 
     [Fact]
-    public async Task LookupAsync_NoZoneFound_TreatedAsUnknownWithReason()
+    public async Task LookupAsync_NoZoneFound_ReturnsNoneRiskWithReason()
     {
         var geocoding = new StubGeocodingService();
         var index = new StubFloodZoneIndex(null);
@@ -89,7 +102,7 @@ public class GisFloodDataProviderTests
 
         var result = await sut.LookupAsync("1 Flood St", CancellationToken.None);
 
-        Assert.Equal(FloodRisk.Unknown, result.Risk);
+        Assert.Equal(FloodRisk.None, result.Risk);
         Assert.Contains("No flood zone found", string.Join(' ', result.Reasons));
     }
 
