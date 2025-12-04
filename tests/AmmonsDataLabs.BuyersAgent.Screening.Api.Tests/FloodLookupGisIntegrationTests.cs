@@ -8,6 +8,10 @@ using Xunit;
 
 namespace AmmonsDataLabs.BuyersAgent.Screening.Api.Tests;
 
+/// <summary>
+/// Integration tests for Tier 3 (point-buffer) flood lookup behavior.
+/// Uses HybridFloodDataProvider with an empty metrics index to test point-buffer fallback.
+/// </summary>
 public class FloodLookupGisIntegrationTests
 {
     private sealed class GisTestFactory : WebApplicationFactory<Program>
@@ -23,7 +27,8 @@ public class FloodLookupGisIntegrationTests
                     .Where(d =>
                         d.ServiceType == typeof(IGeocodingService) ||
                         d.ServiceType == typeof(IFloodZoneIndex) ||
-                        d.ServiceType == typeof(IFloodDataProvider))
+                        d.ServiceType == typeof(IFloodDataProvider) ||
+                        d.ServiceType == typeof(IBccParcelMetricsIndex))
                     .ToList();
 
                 foreach (var descriptor in descriptorsToRemove)
@@ -31,10 +36,11 @@ public class FloodLookupGisIntegrationTests
                     services.Remove(descriptor);
                 }
 
-                // Register test implementations
+                // Register test implementations (empty metrics to force Tier 3 fallback)
                 services.AddSingleton<IGeocodingService, TestGeocodingService>();
                 services.AddSingleton<IFloodZoneIndex, TestFloodZoneIndex>();
-                services.AddScoped<IFloodDataProvider, GisFloodDataProvider>();
+                services.AddSingleton<IBccParcelMetricsIndex>(new InMemoryBccParcelMetricsIndex([], []));
+                services.AddScoped<IFloodDataProvider, HybridFloodDataProvider>();
             });
         }
     }
@@ -97,7 +103,7 @@ public class FloodLookupGisIntegrationTests
     }
 
     [Fact]
-    public async Task Lookup_ReturnsHighRiskFromGis()
+    public async Task Lookup_ReturnsHighRiskFromPointBuffer()
     {
         await using var factory = new GisTestFactory();
         using var client = factory.CreateClient();
@@ -112,7 +118,7 @@ public class FloodLookupGisIntegrationTests
         var content = await response.Content.ReadAsStringAsync();
 
         Assert.Contains("High", content);
-        Assert.Contains("GIS", content, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("point buffer", content, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
@@ -126,7 +132,8 @@ public class FloodLookupGisIntegrationTests
                     .Where(d =>
                         d.ServiceType == typeof(IGeocodingService) ||
                         d.ServiceType == typeof(IFloodZoneIndex) ||
-                        d.ServiceType == typeof(IFloodDataProvider))
+                        d.ServiceType == typeof(IFloodDataProvider) ||
+                        d.ServiceType == typeof(IBccParcelMetricsIndex))
                     .ToList();
 
                 foreach (var descriptor in descriptorsToRemove)
@@ -136,7 +143,8 @@ public class FloodLookupGisIntegrationTests
 
                 services.AddSingleton<IGeocodingService, OutsideZoneGeocodingService>();
                 services.AddSingleton<IFloodZoneIndex, TestFloodZoneIndex>();
-                services.AddScoped<IFloodDataProvider, GisFloodDataProvider>();
+                services.AddSingleton<IBccParcelMetricsIndex>(new InMemoryBccParcelMetricsIndex([], []));
+                services.AddScoped<IFloodDataProvider, HybridFloodDataProvider>();
             });
         });
 

@@ -3,7 +3,6 @@ using AmmonsDataLabs.BuyersAgent.Geo;
 using AmmonsDataLabs.BuyersAgent.Screening.Api.Services;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
@@ -11,7 +10,7 @@ namespace AmmonsDataLabs.BuyersAgent.Screening.Api.Tests;
 
 public class FloodDiConfigurationTests
 {
-    private static WebApplicationFactory<Program> CreateFactory(bool useGisProvider)
+    private static WebApplicationFactory<Program> CreateFactory(bool useGisProvider = false)
     {
         return new WebApplicationFactory<Program>()
             .WithWebHostBuilder(builder =>
@@ -22,15 +21,16 @@ public class FloodDiConfigurationTests
     }
 
     [Fact]
-    public void WhenUseGisProviderTrue_RegistersGisTypes()
+    public void WhenUseGisProviderTrue_RegistersHybridProvider()
     {
         using var factory = CreateFactory(useGisProvider: true);
         using var scope = factory.Services.CreateScope();
         var sp = scope.ServiceProvider;
 
-        Assert.IsType<GisFloodDataProvider>(sp.GetRequiredService<IFloodDataProvider>());
+        Assert.IsType<HybridFloodDataProvider>(sp.GetRequiredService<IFloodDataProvider>());
         Assert.NotNull(sp.GetService<IFloodZoneIndex>());
         Assert.NotNull(sp.GetService<IGeocodingService>());
+        Assert.NotNull(sp.GetService<IBccParcelMetricsIndex>());
     }
 
     [Fact]

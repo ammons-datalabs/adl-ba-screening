@@ -10,6 +10,7 @@
     <PackageReference Include="NetTopologySuite" Version="2.6.0" />
     <PackageReference Include="NetTopologySuite.IO.GeoJSON" Version="4.0.0" />
     <PackageReference Include="NetTopologySuite.IO.ShapeFile" Version="2.1.0" />
+    <PackageReference Include="Parquet.Net" Version="5.4.0" />
   </ItemGroup>
 
   <PropertyGroup>
@@ -18,5 +19,9 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="AmmonsDataLabs.BuyersAgent.Flood.DataPrep.Tests" />
+  </ItemGroup>
 
 </Project>

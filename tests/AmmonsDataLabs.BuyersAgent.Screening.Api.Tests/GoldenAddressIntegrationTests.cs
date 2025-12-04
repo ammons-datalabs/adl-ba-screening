@@ -42,16 +42,57 @@ public class GoldenAddressIntegrationTests : IDisposable
         _tempDir = Path.Combine(Path.GetTempPath(), $"golden-test-{Guid.NewGuid()}");
         Directory.CreateDirectory(_tempDir);
 
-        // Create geocoding file with golden addresses
-        _geocodingFilePath = Path.Combine(_tempDir, "golden-geocoding.json");
-        var geocodingData = GoldenAddresses.Select(a => new
+        // Create geocoding file with golden addresses in NDJSON format
+        _geocodingFilePath = Path.Combine(_tempDir, "golden-geocoding.ndjson");
+        using var writer = File.CreateText(_geocodingFilePath);
+        foreach (var a in GoldenAddresses)
         {
-            address = a.Address,
-            lat = a.Lat,
-            lon = a.Lon
-        }).ToArray();
+            // Parse address to extract components for component-based lookup
+            var parts = ParseGoldenAddress(a.Address);
+            var json = JsonSerializer.Serialize(new
+            {
+                lot_plan = $"TEST{parts.house}",
+                house_number = parts.house,
+                corridor_name = parts.street.ToUpperInvariant(),
+                corridor_suffix_code = parts.suffix,
+                suburb = parts.suburb.ToUpperInvariant(),
+                latitude = a.Lat,
+                longitude = a.Lon,
+                normalized_address = a.Address
+            });
+            writer.WriteLine(json);
+        }
+    }
 
-        File.WriteAllText(_geocodingFilePath, JsonSerializer.Serialize(geocodingData));
+    private static (string house, string street, string suffix, string suburb) ParseGoldenAddress(string address)
+    {
+        // Parse addresses like "1 Low Risk Lane, Brisbane QLD"
+        var commaIdx = address.IndexOf(',');
+        var streetPart = address[..commaIdx].Trim();
+        var suburbPart = address[(commaIdx + 1)..].Trim();
+
+        // Remove state code from suburb
+        var spaceIdx = suburbPart.LastIndexOf(' ');
+        var suburb = spaceIdx > 0 ? suburbPart[..spaceIdx] : suburbPart;
+
+        // Parse street: "1 Low Risk Lane" -> house="1", street="Low Risk", suffix="LN"
+        var words = streetPart.Split(' ');
+        var house = words[0];
+        var suffix = NormalizeSuffix(words[^1]);
+        var street = string.Join(" ", words[1..^1]);
+
+        return (house, street, suffix, suburb);
+    }
+
+    private static string NormalizeSuffix(string suffix)
+    {
+        return suffix.ToUpperInvariant() switch
+        {
+            "LANE" => "LN",
+            "STREET" or "ST" => "ST",
+            "AVENUE" or "AVE" => "AVE",
+            _ => suffix.ToUpperInvariant()
+        };
     }
 
     public void Dispose()
@@ -85,7 +126,8 @@ public class GoldenAddressIntegrationTests : IDisposable
                             d.ServiceType == typeof(IGeocodingService) ||
                             d.ServiceType == typeof(IFloodZoneIndex) ||
                             d.ServiceType == typeof(IFloodDataProvider) ||
-                            d.ServiceType == typeof(IFloodZoneDataLoader))
+                            d.ServiceType == typeof(IFloodZoneDataLoader) ||
+                            d.ServiceType == typeof(IBccParcelMetricsIndex))
                         .ToList();
 
                     foreach (var descriptor in descriptorsToRemove)
@@ -94,21 +136,11 @@ public class GoldenAddressIntegrationTests : IDisposable
                     }
 
                     // Use FileGeocodingService with golden addresses
-                    services.Configure<FileGeocodingOptions>(opt =>
-                    {
-                        // Use object initializer pattern for init-only property
-                    });
                     services.AddSingleton<IGeocodingService>(_ =>
                     {
                         var options = Microsoft.Extensions.Options.Options.Create(
                             new FileGeocodingOptions { FilePath = geocodingPath });
                         return new FileGeocodingService(options);
-                    });
-
-                    // Configure FloodDataOptions to point to sample NDJSON
-                    services.Configure<FloodDataOptions>(opt =>
-                    {
-                        // Use object initializer pattern for init-only properties
                     });
 
                     // Register loader and index
@@ -125,7 +157,9 @@ public class GoldenAddressIntegrationTests : IDisposable
                         return new BccFloodZoneIndex(loader, options);
                     });
 
-                    services.AddScoped<IFloodDataProvider, GisFloodDataProvider>();
+                    // Empty metrics index to test Tier 3 point-buffer behavior
+                    services.AddSingleton<IBccParcelMetricsIndex>(new InMemoryBccParcelMetricsIndex([], []));
+                    services.AddScoped<IFloodDataProvider, HybridFloodDataProvider>();
                 });
             });
     }

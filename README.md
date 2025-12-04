@@ -81,21 +81,27 @@ Content-Type: application/json
       "risk": "None",
       "proximity": "None",
       "distanceMetres": null,
-      "reasons": ["No flood zone found at this location (GIS)."]
+      "source": "BccParcelMetrics",
+      "scope": "Parcel",
+      "reasons": ["BCC parcel metrics indicate no flood risk for 14RP35089."]
     },
     {
       "address": "118 Fernberg Road, Paddington QLD 4064",
       "risk": "Low",
-      "proximity": "Near",
-      "distanceMetres": 2.49,
-      "reasons": ["Location is 2.5m from Low likelihood flood zone (GIS)."]
+      "proximity": "Inside",
+      "distanceMetres": null,
+      "source": "BccParcelMetrics",
+      "scope": "Parcel",
+      "reasons": ["Risk derived from BCC parcel metrics (parcel: 1RP35089).", "Source flags: FLA_1PCT_AEP"]
     },
     {
       "address": "3/241 Horizon Drive, Westlake QLD 4074",
-      "risk": "Low",
-      "proximity": "Near",
-      "distanceMetres": 7.68,
-      "reasons": ["Location is 7.7m from Low likelihood flood zone (GIS)."]
+      "risk": "Medium",
+      "proximity": "Inside",
+      "distanceMetres": null,
+      "source": "BccParcelMetrics",
+      "scope": "PlanFallback",
+      "reasons": ["Risk derived from BCC parcel metrics (plan-level fallback for GTP102995)."]
     }
   ]
 }
@@ -125,21 +131,54 @@ IFloodScreeningService
       v
 FloodScreeningService
       |
-      +---> IGeocodingService (address -> coordinates)
+      +---> IGeocodingService (address -> coordinates + lotplan)
       |           |
-      |           +-- AzureMapsGeocodingService (production)
-      |           +-- FileGeocodingService (development)
-      |           +-- StubGeocodingService (testing)
+      |           +-- AzureMapsGeocodingService (production - coordinates only)
+      |           +-- FileGeocodingService (BCC parcel data - coordinates + lotplan)
       |
-      +---> IFloodDataProvider (coordinates -> flood risk)
+      +---> IFloodDataProvider (flood risk lookup)
                   |
-                  +-- GisFloodDataProvider
+                  +-- HybridFloodDataProvider (tiered lookup strategy)
                             |
-                            v
-                      IFloodZoneIndex (spatial queries)
-                            |
-                            +-- BccFloodZoneIndex (NDJSON + R-tree)
+                            +-- Tier 1: IBccParcelMetricsIndex (lotplan -> precomputed metrics)
+                            +-- Tier 2: [NOT IMPLEMENTED] Parcel boundary intersection
+                            +-- Tier 3: IFloodZoneIndex (point-buffer spatial queries)
 ```
+
+## Tiered Flood Lookup Strategy
+
+The `HybridFloodDataProvider` uses a tiered lookup strategy, attempting higher-accuracy
+sources first before falling back to less precise methods:
+
+### Tier 1: Precomputed Parcel Metrics (BCC)
+
+**Highest accuracy** - equivalent to BCC FloodWise reports.
+
+- Metrics are precomputed offline by intersecting parcel boundaries with flood extents
+- Keyed by Queensland lotplan identifier (e.g., `1RP35089`)
+- Falls back to plan-level aggregation when specific lot data unavailable
+- Currently available for **Brisbane City Council** only
+- Source data: BCC parcel boundaries GeoJSON + flood awareness parquet files
+
+### Tier 2: Runtime Parcel Intersection (Future)
+
+**NOT YET IMPLEMENTED** - reserved for councils outside BCC coverage.
+
+- Would perform runtime intersection of parcel boundary polygon with flood extents
+- Intended for **Ipswich, Logan**, and other SEQ councils
+- Requires parcel boundary geometry at lookup time
+- BCC already has full parcel boundaries in source data, but Tier 1 precomputed
+  metrics make runtime intersection unnecessary for BCC coverage
+
+### Tier 3: Point-Buffer Proximity
+
+**Fallback** when Tier 1/2 data is unavailable.
+
+- Uses geocoded centroid with 30m buffer for spatial query against flood zones
+- Least accurate due to:
+  - Geocoding imprecision (address may resolve to centroid, not actual building)
+  - No parcel boundary awareness (misses cases where lot boundary intersects flood zone but centroid doesn't)
+- Returns proximity status: `Inside`, `Near` (with distance), or `None`
 
 ## Flood Risk Levels
 
@@ -231,8 +270,12 @@ Flood zone polygons are sourced from BCC open data and processed into NDJSON for
 
 ## Known Limitations
 
-- **Point-based geocoding**: The system checks flood risk at a single geocoded point (address centroid). For multi-dwelling developments, the centroid may be outside flood zones even when lot boundaries intersect them. See `KnownLimitationsTests.cs` for documented examples.
-- **No cadastral data**: Accurate lot-boundary flood assessment would require cadastral (lot boundary) data from QSpatial.
+- **BCC coverage only (Tier 1)**: Precomputed parcel metrics are currently only available for Brisbane City Council. Properties outside BCC fall back to Tier 3 point-buffer lookup.
+- **Tier 3 accuracy**: Point-buffer lookup (used when Tier 1 unavailable) has known limitations:
+  - Geocoding may resolve to parcel centroid rather than building location
+  - Misses cases where lot boundary intersects flood zone but centroid doesn't
+  - Multi-dwelling developments may have centroids outside flood zones even when lot boundaries intersect them
+- **AzureMaps geocoding**: Does not return lotplan identifiers, so cannot use Tier 1 lookup. Use `FileGeocodingService` with BCC parcel data for Tier 1 accuracy.
 
 ## Testing
 
@@ -250,9 +293,10 @@ dotnet test --configuration Release --no-build
 
 ## Future Enhancements
 
-- Cadastral data integration for lot boundary flood assessment
-- Additional screening types (bushfire, erosion, etc.)
-- Position assessment (heuristic-based scoring)
+- **Tier 2 implementation**: Runtime parcel intersection for Ipswich, Logan, and other SEQ councils
+- **Automated data updates**: Pipeline to refresh BCC flood/parcel data as council updates source files
+- **Additional screening types**: Bushfire, erosion, subsidence, etc.
+- **Position assessment**: Heuristic-based scoring for property positioning
 
 ## License
 

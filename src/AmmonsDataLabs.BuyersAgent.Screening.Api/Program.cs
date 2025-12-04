@@ -27,15 +27,16 @@ var useGisProvider = builder.Configuration.GetValue<bool>("Flood:UseGisProvider"
 
 if (useGisProvider)
 {
-    // GIS-based flood data provider with geocoding and zone lookup
+    // GIS-based flood data provider: Tier 1 BCC parcel metrics + Tier 3 point buffer fallback
     builder.Services.AddGeocoding(builder.Configuration);
     builder.Services.AddSingleton<IFloodZoneDataLoader, NdjsonFloodZoneDataLoader>();
     builder.Services.AddSingleton<IFloodZoneIndex, BccFloodZoneIndex>();
-    builder.Services.AddScoped<IFloodDataProvider, GisFloodDataProvider>();
+    builder.Services.AddSingleton<IBccParcelMetricsIndex, NdjsonBccParcelMetricsIndex>();
+    builder.Services.AddScoped<IFloodDataProvider, HybridFloodDataProvider>();
 }
 else
 {
-    // Simple pattern-based flood data provider (default)
+    // Simple pattern-based flood data provider (default, for testing)
     builder.Services.AddScoped<IFloodDataProvider, SimpleFloodDataProvider>();
 }
 
