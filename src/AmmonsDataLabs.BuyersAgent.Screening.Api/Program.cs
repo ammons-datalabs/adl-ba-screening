@@ -1,6 +1,8 @@
 using AmmonsDataLabs.BuyersAgent.Screening.Api.Configuration;
 using System.Text.Json.Serialization;
 using AmmonsDataLabs.BuyersAgent.Flood;
+using AmmonsDataLabs.BuyersAgent.Flood.Configuration;
+using AmmonsDataLabs.BuyersAgent.Geo;
 using AmmonsDataLabs.BuyersAgent.Screening.Api.Endpoints;
 using AmmonsDataLabs.BuyersAgent.Screening.Api.Services;
 
@@ -18,7 +20,26 @@ builder.Services.ConfigureHttpJsonOptions(options =>
     options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
 });
 
-builder.Services.AddScoped<IFloodDataProvider, SimpleFloodDataProvider>();
+builder.Services.Configure<FloodDataOptions>(
+    builder.Configuration.GetSection(FloodDataOptions.SectionName));
+
+var useGisProvider = builder.Configuration.GetValue<bool>("Flood:UseGisProvider");
+
+if (useGisProvider)
+{
+    // GIS-based flood data provider: Tier 1 BCC parcel metrics + Tier 3 point buffer fallback
+    builder.Services.AddGeocoding(builder.Configuration);
+    builder.Services.AddSingleton<IFloodZoneDataLoader, NdjsonFloodZoneDataLoader>();
+    builder.Services.AddSingleton<IFloodZoneIndex, BccFloodZoneIndex>();
+    builder.Services.AddSingleton<IBccParcelMetricsIndex, NdjsonBccParcelMetricsIndex>();
+    builder.Services.AddScoped<IFloodDataProvider, HybridFloodDataProvider>();
+}
+else
+{
+    // Simple pattern-based flood data provider (default, for testing)
+    builder.Services.AddScoped<IFloodDataProvider, SimpleFloodDataProvider>();
+}
+
 builder.Services.AddScoped<IFloodScreeningService, FloodScreeningService>();
 
 var app = builder.Build();

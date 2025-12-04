@@ -41,7 +41,7 @@ public class FloodZoneIndexTests
     public void FindZoneForPoint_InsideSingleZone_ReturnsThatZone()
     {
         var zone = HighRiskSquare();
-        var index = new InMemoryFloodZoneIndex(new[] { zone });
+        var index = new InMemoryFloodZoneIndex([zone]);
         var point = new GeoPoint(-27.46, 153.02);
 
         var result = index.FindZoneForPoint(point);
@@ -55,7 +55,7 @@ public class FloodZoneIndexTests
     public void FindZoneForPoint_OutsideAllZones_ReturnsNull()
     {
         var zone = HighRiskSquare();
-        var index = new InMemoryFloodZoneIndex(new[] { zone });
+        var index = new InMemoryFloodZoneIndex([zone]);
         var point = new GeoPoint(-27.60, 153.20);
 
         var result = index.FindZoneForPoint(point);
@@ -68,7 +68,7 @@ public class FloodZoneIndexTests
     {
         var high = HighRiskSquare();
         var low = LowRiskBiggerSquare();
-        var index = new InMemoryFloodZoneIndex(new[] { low, high });
+        var index = new InMemoryFloodZoneIndex([low, high]);
         var point = new GeoPoint(-27.46, 153.02);
 
         var result = index.FindZoneForPoint(point);
@@ -76,5 +76,63 @@ public class FloodZoneIndexTests
         Assert.NotNull(result);
         Assert.Equal(FloodRisk.High, result!.Risk);
         Assert.Equal("high-1", result.Id);
+    }
+
+    [Fact]
+    public void FindNearestZone_ReturnsInside_WhenPointInsidePolygon()
+    {
+        var zone = HighRiskSquare();
+        var index = new InMemoryFloodZoneIndex([zone]);
+        var pointInside = new GeoPoint(-27.46, 153.02);
+
+        var result = index.FindNearestZone(pointInside, maxDistanceMetres: 30);
+
+        Assert.NotNull(result);
+        Assert.Equal(FloodZoneProximity.Inside, result!.Proximity);
+        Assert.Equal(0, result.DistanceMetres);
+        Assert.Equal(zone.Id, result.Zone.Id);
+    }
+
+    [Fact]
+    public void FindNearestZone_ReturnsNear_WhenOutsideButWithinBuffer()
+    {
+        var zone = HighRiskSquare();
+        var index = new InMemoryFloodZoneIndex([zone]);
+        var pointJustOutside = new GeoPoint(-27.481, 153.02);
+
+        var result = index.FindNearestZone(pointJustOutside, maxDistanceMetres: 200);
+
+        Assert.NotNull(result);
+        Assert.Equal(FloodZoneProximity.Near, result!.Proximity);
+        Assert.True(result.DistanceMetres > 0);
+        Assert.True(result.DistanceMetres <= 200);
+        Assert.Equal(zone.Id, result.Zone.Id);
+    }
+
+    [Fact]
+    public void FindNearestZone_ReturnsNull_WhenNoZoneWithinBuffer()
+    {
+        var zone = HighRiskSquare();
+        var index = new InMemoryFloodZoneIndex([zone]);
+        var pointFarAway = new GeoPoint(-27.60, 153.20);
+
+        var result = index.FindNearestZone(pointFarAway, maxDistanceMetres: 30);
+
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public void FindNearestZone_ReturnsHighestRisk_WhenMultipleZonesWithinBuffer()
+    {
+        var high = HighRiskSquare();
+        var low = LowRiskBiggerSquare();
+        var index = new InMemoryFloodZoneIndex([low, high]);
+        var pointInside = new GeoPoint(-27.46, 153.02);
+
+        var result = index.FindNearestZone(pointInside, maxDistanceMetres: 30);
+
+        Assert.NotNull(result);
+        Assert.Equal(FloodRisk.High, result!.Zone.Risk);
+        Assert.Equal(FloodZoneProximity.Inside, result.Proximity);
     }
 }
