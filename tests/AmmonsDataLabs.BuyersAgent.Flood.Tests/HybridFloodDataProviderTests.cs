@@ -173,6 +173,75 @@ public class HybridFloodDataProviderTests
         Assert.Equal(FloodRisk.Unknown, result.Risk);
     }
 
+    [Fact]
+    public async Task Lookup_Tier3ReturnsNear_WhenLocationNearFloodZone()
+    {
+        // Geocoding returns a location but no lotplan - tests "Near" proximity branch
+        var geocoder = new StubGeocoder("123 Near Zone St", null);
+        var metricsIndex = new StubMetricsIndex();
+
+        var polygon = GeoFactory.CreatePolygon(
+            new GeoPoint(-27.48, 153.00),
+            new GeoPoint(-27.48, 153.05),
+            new GeoPoint(-27.45, 153.05),
+            new GeoPoint(-27.45, 153.00));
+
+        var zone = new FloodZone
+        {
+            Id = "zone-1",
+            Risk = FloodRisk.Low,
+            Geometry = polygon
+        };
+
+        // Use a zone index that returns "Near" proximity with distance
+        var zoneIndex = new NearFloodZoneIndex(zone, 15.5);
+
+        var provider = new HybridFloodDataProvider(geocoder, metricsIndex, zoneIndex);
+
+        var result = await provider.LookupAsync("123 Near Zone St");
+
+        Assert.Equal(FloodRisk.Low, result.Risk);
+        Assert.Equal(FloodZoneProximity.Near, result.Proximity);
+        Assert.Equal(15.5, result.DistanceMetres);
+        Assert.Equal(FloodDataSource.PointBuffer, result.Source);
+        Assert.Contains("15.5m from", string.Join(" ", result.Reasons));
+    }
+
+    [Fact]
+    public async Task Lookup_ReturnsUnknown_WhenNoLotPlanAndNoLocation()
+    {
+        // Edge case: geocoding succeeds but returns neither lotplan nor location
+        var geocoder = new NoLocationGeocoder();
+        var metricsIndex = new StubMetricsIndex();
+        var zoneIndex = new StubFloodZoneIndex(null);
+
+        var provider = new HybridFloodDataProvider(geocoder, metricsIndex, zoneIndex);
+
+        var result = await provider.LookupAsync("Some Address");
+
+        Assert.Equal(FloodRisk.Unknown, result.Risk);
+        Assert.Equal(FloodDataSource.Unknown, result.Source);
+        Assert.Contains("no lotplan or location", string.Join(" ", result.Reasons), StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task Lookup_Tier3ReturnsNone_WhenNoZoneFound()
+    {
+        // Geocoding returns location but no lotplan, and no flood zone is found
+        var geocoder = new StubGeocoder("789 Safe St", null);
+        var metricsIndex = new StubMetricsIndex();
+        var zoneIndex = new StubFloodZoneIndex(null); // Returns null - no zone found
+
+        var provider = new HybridFloodDataProvider(geocoder, metricsIndex, zoneIndex);
+
+        var result = await provider.LookupAsync("789 Safe St");
+
+        Assert.Equal(FloodRisk.None, result.Risk);
+        Assert.Equal(FloodZoneProximity.None, result.Proximity);
+        Assert.Equal(FloodDataSource.PointBuffer, result.Source);
+        Assert.Contains("No flood zone found", string.Join(" ", result.Reasons));
+    }
+
     // Test stub implementations
     private sealed class StubGeocoder : IGeocodingService
     {
@@ -208,6 +277,22 @@ public class HybridFloodDataProviderTests
                 Query = address,
                 Status = GeocodingStatus.NotFound,
                 Provider = "FailingGeocoder"
+            });
+        }
+    }
+
+    private sealed class NoLocationGeocoder : IGeocodingService
+    {
+        public Task<GeocodingResult> GeocodeAsync(string address, CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult(new GeocodingResult
+            {
+                Query = address,
+                NormalizedAddress = address,
+                Location = null, // No location
+                LotPlan = null,  // No lotplan
+                Status = GeocodingStatus.Success,
+                Provider = "NoLocationGeocoder"
             });
         }
     }
@@ -279,6 +364,30 @@ public class HybridFloodDataProviderTests
                 Zone = _zone,
                 DistanceMetres = 0,
                 Proximity = FloodZoneProximity.Inside
+            };
+        }
+    }
+
+    private sealed class NearFloodZoneIndex : IFloodZoneIndex
+    {
+        private readonly FloodZone _zone;
+        private readonly double _distance;
+
+        public NearFloodZoneIndex(FloodZone zone, double distance)
+        {
+            _zone = zone;
+            _distance = distance;
+        }
+
+        public FloodZone? FindZoneForPoint(GeoPoint point) => null; // Not inside
+
+        public FloodZoneHit? FindNearestZone(GeoPoint point, double maxDistanceMetres)
+        {
+            return new FloodZoneHit
+            {
+                Zone = _zone,
+                DistanceMetres = _distance,
+                Proximity = FloodZoneProximity.Near
             };
         }
     }

@@ -98,6 +98,98 @@ public class BccParcelMetricsIndexTests
         Assert.Equal(MetricsScope.PlanFallback, metrics.Scope);
         Assert.Equal(FloodRisk.Medium, metrics.OverallRisk);
     }
+
+    [Fact]
+    public void TryGet_InvalidLotPlanFormat_ReturnsFalse()
+    {
+        var index = BccParcelMetricsIndexTestFactory.Create(
+            parcelJsonLines: [],
+            planJsonLines: new[]
+            {
+                """{"lotplan":"PLAN:GTP102995","plan":"GTP102995","overall_risk":"Medium","river_risk":"Medium","creek_risk":"Unknown","storm_tide_risk":"Unknown","has_flood_info":true,"has_overland_flow":false,"evidence_metrics":[]}"""
+            });
+
+        // Invalid lotplan format (no digits) should return false due to FormatException catch
+        Assert.False(index.TryGet("INVALID", out _));
+        Assert.False(index.TryGet("ABC", out _));
+        Assert.False(index.TryGet("NO_PLAN_MATCH", out _));
+    }
+
+    [Fact]
+    public void TryGet_SkipsEmptyAndNullLines()
+    {
+        var index = BccParcelMetricsIndexTestFactory.Create(
+            parcelJsonLines: new[]
+            {
+                "",
+                "   ",
+                """{"lotplan":"1RP12345","plan":"RP12345","overall_risk":"Low","river_risk":"Low","creek_risk":"Unknown","storm_tide_risk":"Unknown","has_flood_info":true,"has_overland_flow":false,"evidence_metrics":[]}"""
+            },
+            planJsonLines: []);
+
+        // Should skip empty lines and still load valid data
+        Assert.True(index.TryGet("1RP12345", out var metrics));
+        Assert.Equal(FloodRisk.Low, metrics.OverallRisk);
+    }
+
+    [Fact]
+    public void TryGet_ParsesAllRiskLevels()
+    {
+        var index = BccParcelMetricsIndexTestFactory.Create(
+            parcelJsonLines: new[]
+            {
+                """{"lotplan":"1RP11111","plan":"RP11111","overall_risk":"High","river_risk":"Unknown","creek_risk":"Unknown","storm_tide_risk":"Unknown","has_flood_info":true,"has_overland_flow":false,"evidence_metrics":[]}""",
+                """{"lotplan":"2RP22222","plan":"RP22222","overall_risk":"Medium","river_risk":"Unknown","creek_risk":"Unknown","storm_tide_risk":"Unknown","has_flood_info":true,"has_overland_flow":false,"evidence_metrics":[]}""",
+                """{"lotplan":"3RP33333","plan":"RP33333","overall_risk":"Low","river_risk":"Unknown","creek_risk":"Unknown","storm_tide_risk":"Unknown","has_flood_info":true,"has_overland_flow":false,"evidence_metrics":[]}""",
+                """{"lotplan":"4RP44444","plan":"RP44444","overall_risk":"None","river_risk":"Unknown","creek_risk":"Unknown","storm_tide_risk":"Unknown","has_flood_info":false,"has_overland_flow":false,"evidence_metrics":[]}""",
+                """{"lotplan":"5RP55555","plan":"RP55555","overall_risk":"InvalidValue","river_risk":"Unknown","creek_risk":"Unknown","storm_tide_risk":"Unknown","has_flood_info":true,"has_overland_flow":false,"evidence_metrics":[]}"""
+            },
+            planJsonLines: []);
+
+        Assert.True(index.TryGet("1RP11111", out var high));
+        Assert.Equal(FloodRisk.High, high.OverallRisk);
+
+        Assert.True(index.TryGet("2RP22222", out var medium));
+        Assert.Equal(FloodRisk.Medium, medium.OverallRisk);
+
+        Assert.True(index.TryGet("3RP33333", out var low));
+        Assert.Equal(FloodRisk.Low, low.OverallRisk);
+
+        Assert.True(index.TryGet("4RP44444", out var none));
+        Assert.Equal(FloodRisk.None, none.OverallRisk);
+
+        Assert.True(index.TryGet("5RP55555", out var invalid));
+        Assert.Equal(FloodRisk.Unknown, invalid.OverallRisk); // Invalid values map to Unknown
+    }
+
+    [Fact]
+    public void TryGet_HasOverlandFlow_SetsOverlandFlowRisk()
+    {
+        var index = BccParcelMetricsIndexTestFactory.Create(
+            parcelJsonLines: new[]
+            {
+                """{"lotplan":"1RP12345","plan":"RP12345","overall_risk":"Medium","river_risk":"Low","creek_risk":"Low","storm_tide_risk":"None","has_flood_info":true,"has_overland_flow":true,"evidence_metrics":["FL_OVERLAND"]}"""
+            },
+            planJsonLines: []);
+
+        Assert.True(index.TryGet("1RP12345", out var metrics));
+        Assert.Equal(FloodRisk.Unknown, metrics.OverlandFlowRisk); // has_overland_flow=true -> Unknown
+        Assert.Contains("FL_OVERLAND", metrics.EvidenceMetrics);
+    }
+
+    [Fact]
+    public void TryGet_NoOverlandFlow_SetsOverlandFlowRiskToNone()
+    {
+        var index = BccParcelMetricsIndexTestFactory.Create(
+            parcelJsonLines: new[]
+            {
+                """{"lotplan":"1RP12345","plan":"RP12345","overall_risk":"Low","river_risk":"Low","creek_risk":"Unknown","storm_tide_risk":"Unknown","has_flood_info":true,"has_overland_flow":false,"evidence_metrics":[]}"""
+            },
+            planJsonLines: []);
+
+        Assert.True(index.TryGet("1RP12345", out var metrics));
+        Assert.Equal(FloodRisk.None, metrics.OverlandFlowRisk); // has_overland_flow=false -> None
+    }
 }
 
 /// <summary>
