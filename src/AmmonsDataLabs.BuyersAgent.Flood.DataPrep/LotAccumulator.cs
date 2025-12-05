@@ -6,19 +6,6 @@ namespace AmmonsDataLabs.BuyersAgent.Flood.DataPrep;
 /// </summary>
 internal sealed class LotAccumulator
 {
-    private FloodRisk _river = FloodRisk.Unknown;
-    private FloodRisk _creek = FloodRisk.Unknown;
-    private FloodRisk _stormTide = FloodRisk.Unknown;
-    private bool _hasFloodInfo;
-    private bool _hasOverlandFlow;
-
-    private decimal? _onePercentAepRiver;
-    private decimal? _pointTwoPercentAepRiver;
-    private decimal? _definedFloodLevel;
-    private decimal? _historicFloodLevel1;
-
-    private readonly HashSet<string> _evidence = new(StringComparer.OrdinalIgnoreCase);
-
     /// <summary>
     /// Maps BCC metric names to flood source and risk level.
     /// Based on BCC Flood Awareness Property Parcel Metrics reference.
@@ -27,23 +14,35 @@ internal sealed class LotAccumulator
         RiskMetricMap = new(StringComparer.OrdinalIgnoreCase)
         {
             // River risk indicators
-            ["FL_VLOW_RIVER"] = (FloodSource.River, FloodRisk.Low),    // Very Low -> Low
+            ["FL_VLOW_RIVER"] = (FloodSource.River, FloodRisk.Low), // Very Low -> Low
             ["FL_LOW_RIVER"] = (FloodSource.River, FloodRisk.Low),
             ["FL_MED_RIVER"] = (FloodSource.River, FloodRisk.Medium),
             ["FL_HIGH_RIVER"] = (FloodSource.River, FloodRisk.High),
 
             // Creek/waterway risk indicators
-            ["FL_VLOW_CREEK"] = (FloodSource.Creek, FloodRisk.Low),    // Very Low -> Low
+            ["FL_VLOW_CREEK"] = (FloodSource.Creek, FloodRisk.Low), // Very Low -> Low
             ["FL_LOW_CREEK"] = (FloodSource.Creek, FloodRisk.Low),
             ["FL_MED_CREEK"] = (FloodSource.Creek, FloodRisk.Medium),
             ["FL_HIGH_CREEK"] = (FloodSource.Creek, FloodRisk.High),
 
             // Storm tide risk indicators
-            ["FL_VLOW_ST"] = (FloodSource.StormTide, FloodRisk.Low),   // Very Low -> Low
+            ["FL_VLOW_ST"] = (FloodSource.StormTide, FloodRisk.Low), // Very Low -> Low
             ["FL_LOW_ST"] = (FloodSource.StormTide, FloodRisk.Low),
             ["FL_MED_ST"] = (FloodSource.StormTide, FloodRisk.Medium),
-            ["FL_HIGH_ST"] = (FloodSource.StormTide, FloodRisk.High),
+            ["FL_HIGH_ST"] = (FloodSource.StormTide, FloodRisk.High)
         };
+
+    private readonly HashSet<string> _evidence = new(StringComparer.OrdinalIgnoreCase);
+    private FloodRisk _creek = FloodRisk.Unknown;
+    private decimal? _definedFloodLevel;
+    private bool _hasFloodInfo;
+    private bool _hasOverlandFlow;
+    private decimal? _historicFloodLevel1;
+
+    private decimal? _onePercentAepRiver;
+    private decimal? _pointTwoPercentAepRiver;
+    private FloodRisk _river = FloodRisk.Unknown;
+    private FloodRisk _stormTide = FloodRisk.Unknown;
 
     /// <summary>
     /// Applies a single metric row to this accumulator.
@@ -63,6 +62,7 @@ internal sealed class LotAccumulator
                 _hasFloodInfo = true;
                 _evidence.Add(metric);
             }
+
             return;
         }
 
@@ -74,6 +74,7 @@ internal sealed class LotAccumulator
                 _hasOverlandFlow = true;
                 _evidence.Add(metric);
             }
+
             return;
         }
 
@@ -132,7 +133,7 @@ internal sealed class LotAccumulator
             OnePercentAepRiver = _onePercentAepRiver,
             PointTwoPercentAepRiver = _pointTwoPercentAepRiver,
             DefinedFloodLevel = _definedFloodLevel,
-            HistoricFloodLevel1 = _historicFloodLevel1,
+            HistoricFloodLevel1 = _historicFloodLevel1
         };
     }
 
@@ -146,11 +147,14 @@ internal sealed class LotAccumulator
             target = parsed;
             _evidence.Add(metric);
         }
+
         return true;
     }
 
     private static FloodRisk Max(FloodRisk a, FloodRisk b)
-        => (FloodRisk)Math.Max((int)a, (int)b);
+    {
+        return (FloodRisk)Math.Max((int)a, (int)b);
+    }
 }
 
 /// <summary>
@@ -161,5 +165,5 @@ internal enum FloodSource
     Unknown = 0,
     River,
     Creek,
-    StormTide,
+    StormTide
 }

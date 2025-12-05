@@ -1,15 +1,14 @@
-using AmmonsDataLabs.BuyersAgent.Flood;
 using AmmonsDataLabs.BuyersAgent.Flood.DataPrep.Tests.Helpers;
+using NetTopologySuite.Features;
 using NetTopologySuite.Geometries;
-using Xunit;
 
 namespace AmmonsDataLabs.BuyersAgent.Flood.DataPrep.Tests;
 
 public class GeoJsonFloodZoneReaderTests : IDisposable
 {
-    private readonly string _tempDir;
-    private readonly string _riskGeoJsonPath;
     private readonly string _extentsGeoJsonPath;
+    private readonly string _riskGeoJsonPath;
+    private readonly string _tempDir;
 
     public GeoJsonFloodZoneReaderTests()
     {
@@ -25,17 +24,14 @@ public class GeoJsonFloodZoneReaderTests : IDisposable
 
     public void Dispose()
     {
-        if (Directory.Exists(_tempDir))
-        {
-            Directory.Delete(_tempDir, recursive: true);
-        }
+        if (Directory.Exists(_tempDir)) Directory.Delete(_tempDir, true);
         GC.SuppressFinalize(this);
     }
 
     [Fact]
     public void Reader_ConvertsRiskFeaturesToFloodZones()
     {
-        static (string id, FloodRisk risk) MapAttributes(NetTopologySuite.Features.IAttributesTable attributes)
+        static (string id, FloodRisk risk) MapAttributes(IAttributesTable attributes)
         {
             var id = attributes["objectid"]?.ToString() ?? "unknown";
             var floodRisk = attributes["flood_risk"]?.ToString();
@@ -68,7 +64,7 @@ public class GeoJsonFloodZoneReaderTests : IDisposable
     [Fact]
     public void Reader_ConvertsExtentsFeaturesToFloodZones()
     {
-        static (string id, FloodRisk risk) MapAttributes(NetTopologySuite.Features.IAttributesTable attributes)
+        static (string id, FloodRisk risk) MapAttributes(IAttributesTable attributes)
         {
             var id = attributes["objectid"]?.ToString() ?? "unknown";
             // Extents have no risk level
@@ -86,7 +82,7 @@ public class GeoJsonFloodZoneReaderTests : IDisposable
     [Fact]
     public void Reader_PreservesGeometryCoordinates()
     {
-        static (string id, FloodRisk risk) MapAttributes(NetTopologySuite.Features.IAttributesTable attributes)
+        static (string id, FloodRisk risk) MapAttributes(IAttributesTable attributes)
         {
             var id = attributes["objectid"]?.ToString() ?? "unknown";
             var floodRisk = attributes["flood_risk"]?.ToString();
@@ -100,7 +96,9 @@ public class GeoJsonFloodZoneReaderTests : IDisposable
         var envelope = highRiskZone.Geometry.EnvelopeInternal;
 
         // Check bounds are approximately correct (the High zone coordinates from generator)
+        // ReSharper disable once MergeIntoPattern
         Assert.True(envelope.MinX >= 153.00 - 0.01 && envelope.MinX <= 153.00 + 0.01);
+        // ReSharper disable once MergeIntoPattern
         Assert.True(envelope.MaxX >= 153.05 - 0.01 && envelope.MaxX <= 153.05 + 0.01);
     }
 }

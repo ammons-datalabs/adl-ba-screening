@@ -44,10 +44,7 @@ public static class SyntheticGeoJsonGenerator
         };
 
         var featureCollection = new FeatureCollection();
-        foreach (var feature in features)
-        {
-            featureCollection.Add(feature);
-        }
+        foreach (var feature in features) featureCollection.Add(feature);
 
         var serializer = GeoJsonSerializer.Create();
         using var writer = File.CreateText(outputPath);
@@ -74,17 +71,15 @@ public static class SyntheticGeoJsonGenerator
         };
 
         var featureCollection = new FeatureCollection();
-        foreach (var feature in features)
-        {
-            featureCollection.Add(feature);
-        }
+        foreach (var feature in features) featureCollection.Add(feature);
 
         var serializer = GeoJsonSerializer.Create();
         using var writer = File.CreateText(outputPath);
         serializer.Serialize(writer, featureCollection);
     }
 
-    private static Feature CreateFeature(GeometryFactory factory, string objectId, string floodRisk, params Coordinate[] coords)
+    private static Feature CreateFeature(GeometryFactory factory, string objectId, string floodRisk,
+        params Coordinate[] coords)
     {
         var ring = coords.ToList();
         ring.Add(ring[0]); // Close the ring

@@ -7,6 +7,7 @@ namespace AmmonsDataLabs.BuyersAgent.Flood.DataPrep;
 public static class FloodZoneNdjsonWriter
 {
     private static readonly WKBWriter WkbWriter = new() { Strict = false, HandleSRID = true };
+
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase

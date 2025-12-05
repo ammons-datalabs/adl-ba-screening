@@ -1,6 +1,5 @@
 using AmmonsDataLabs.BuyersAgent.Flood;
 using AmmonsDataLabs.BuyersAgent.Screening.Api.Services;
-using Microsoft.OpenApi.Expressions;
 
 namespace AmmonsDataLabs.BuyersAgent.Screening.Api.Tests;
 
@@ -30,7 +29,7 @@ public class FloodScreeningServiceTests
         Assert.Equal("Address 2", response.Results[1].Address);
         Assert.All(response.Results, r => Assert.Equal(FloodRisk.High, r.Risk));
     }
-    
+
     [Fact]
     public async Task ScreenAsync_EmptyProperties_ReturnsEmptyResults()
     {

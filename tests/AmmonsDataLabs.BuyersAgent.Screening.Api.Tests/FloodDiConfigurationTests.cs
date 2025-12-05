@@ -4,7 +4,6 @@ using AmmonsDataLabs.BuyersAgent.Screening.Api.Services;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
-using Xunit;
 
 namespace AmmonsDataLabs.BuyersAgent.Screening.Api.Tests;
 
@@ -23,7 +22,7 @@ public class FloodDiConfigurationTests
     [Fact]
     public void WhenUseGisProviderTrue_RegistersHybridProvider()
     {
-        using var factory = CreateFactory(useGisProvider: true);
+        using var factory = CreateFactory(true);
         using var scope = factory.Services.CreateScope();
         var sp = scope.ServiceProvider;
 
@@ -36,7 +35,7 @@ public class FloodDiConfigurationTests
     [Fact]
     public void WhenUseGisProviderFalse_RegistersSimpleProvider()
     {
-        using var factory = CreateFactory(useGisProvider: false);
+        using var factory = CreateFactory();
         using var scope = factory.Services.CreateScope();
         var sp = scope.ServiceProvider;
 

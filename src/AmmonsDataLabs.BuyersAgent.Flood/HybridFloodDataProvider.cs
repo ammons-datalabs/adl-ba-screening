@@ -6,7 +6,7 @@ namespace AmmonsDataLabs.BuyersAgent.Flood;
 /// Hybrid flood data provider that uses a tiered lookup strategy:
 /// - Tier 1: Precomputed parcel metrics (lotplan -> metrics, with plan fallback). Currently BCC only.
 /// - Tier 2: Runtime parcel boundary intersection with flood extents. NOT YET IMPLEMENTED.
-///           Intended for councils outside BCC (e.g., Ipswich, Logan) where precomputed metrics unavailable.
+/// Intended for councils outside BCC (e.g., Ipswich, Logan) where precomputed metrics unavailable.
 /// - Tier 3: Point-buffer proximity to flood zones. Fallback when Tier 1/2 unavailable.
 /// See FloodDataSource enum for detailed tier documentation.
 /// </summary>
@@ -19,7 +19,10 @@ public sealed class HybridFloodDataProvider(
     private const double DefaultBufferMetres = 30.0;
 
     private readonly IGeocodingService _geocoding = geocoding ?? throw new ArgumentNullException(nameof(geocoding));
-    private readonly IBccParcelMetricsIndex _metricsIndex = metricsIndex ?? throw new ArgumentNullException(nameof(metricsIndex));
+
+    private readonly IBccParcelMetricsIndex _metricsIndex =
+        metricsIndex ?? throw new ArgumentNullException(nameof(metricsIndex));
+
     private readonly IFloodZoneIndex _zoneIndex = zoneIndex ?? throw new ArgumentNullException(nameof(zoneIndex));
 
     public async Task<FloodLookupResult> LookupAsync(
@@ -27,7 +30,6 @@ public sealed class HybridFloodDataProvider(
         CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(address))
-        {
             return new FloodLookupResult
             {
                 Address = address ?? "",
@@ -36,12 +38,10 @@ public sealed class HybridFloodDataProvider(
                 Scope = FloodDataScope.Unknown,
                 Reasons = ["Address was empty or whitespace."]
             };
-        }
 
         var geo = await _geocoding.GeocodeAsync(address, cancellationToken);
 
         if (geo.Status != GeocodingStatus.Success)
-        {
             return new FloodLookupResult
             {
                 Address = address,
@@ -50,7 +50,6 @@ public sealed class HybridFloodDataProvider(
                 Scope = FloodDataScope.Unknown,
                 Reasons = [$"Geocoding failed: {geo.Status}"]
             };
-        }
 
         // Tier 1: BCC parcel metrics (if lotplan available)
         if (!string.IsNullOrEmpty(geo.LotPlan))
@@ -64,10 +63,7 @@ public sealed class HybridFloodDataProvider(
         // NOT YET IMPLEMENTED - BCC uses Tier 1 precomputed metrics instead
 
         // Tier 3: Point-buffer proximity
-        if (geo.Location is not null)
-        {
-            return Tier3Lookup(geo);
-        }
+        if (geo.Location is not null) return Tier3Lookup(geo);
 
         return new FloodLookupResult
         {
@@ -99,9 +95,7 @@ public sealed class HybridFloodDataProvider(
             reasons.Add($"Risk derived from BCC parcel metrics {scopeDescription}.");
 
             if (metrics.EvidenceMetrics.Length > 0)
-            {
                 reasons.Add("Source flags: " + string.Join(", ", metrics.EvidenceMetrics));
-            }
 
             return new FloodLookupResult
             {
@@ -114,22 +108,20 @@ public sealed class HybridFloodDataProvider(
                 Scope = scope
             };
         }
-        else
-        {
-            // Property exists in BCC data but has no flood info = confirmed no flood
-            reasons.Add($"BCC parcel metrics indicate no flood risk for {geo.LotPlan}.");
 
-            return new FloodLookupResult
-            {
-                Address = geo.NormalizedAddress ?? geo.Query,
-                Risk = FloodRisk.None,
-                Proximity = FloodZoneProximity.None,
-                DistanceMetres = null,
-                Reasons = reasons.ToArray(),
-                Source = FloodDataSource.BccParcelMetrics,
-                Scope = scope
-            };
-        }
+        // Property exists in BCC data but has no flood info = confirmed no flood
+        reasons.Add($"BCC parcel metrics indicate no flood risk for {geo.LotPlan}.");
+
+        return new FloodLookupResult
+        {
+            Address = geo.NormalizedAddress ?? geo.Query,
+            Risk = FloodRisk.None,
+            Proximity = FloodZoneProximity.None,
+            DistanceMetres = null,
+            Reasons = reasons.ToArray(),
+            Source = FloodDataSource.BccParcelMetrics,
+            Scope = scope
+        };
     }
 
     private FloodLookupResult Tier3Lookup(GeocodingResult geo)
@@ -137,7 +129,6 @@ public sealed class HybridFloodDataProvider(
         var hit = _zoneIndex.FindNearestZone(geo.Location!.Value, DefaultBufferMetres);
 
         if (hit is null)
-        {
             return new FloodLookupResult
             {
                 Address = geo.NormalizedAddress ?? geo.Query,
@@ -147,7 +138,6 @@ public sealed class HybridFloodDataProvider(
                 Source = FloodDataSource.PointBuffer,
                 Scope = FloodDataScope.Unknown
             };
-        }
 
         var reason = hit.Proximity == FloodZoneProximity.Inside
             ? $"Location falls inside {hit.Zone.Risk} likelihood flood zone (point buffer)."

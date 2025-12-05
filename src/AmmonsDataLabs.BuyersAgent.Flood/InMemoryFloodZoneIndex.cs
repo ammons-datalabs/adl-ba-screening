@@ -23,10 +23,7 @@ public sealed class InMemoryFloodZoneIndex(IEnumerable<FloodZone> zones) : IFloo
             if (!zone.Geometry.Contains(ntsPoint))
                 continue;
 
-            if (best is null || zone.Risk > best.Risk)
-            {
-                best = zone;
-            }
+            if (best is null || zone.Risk > best.Risk) best = zone;
         }
 
         return best;
@@ -47,14 +44,12 @@ public sealed class InMemoryFloodZoneIndex(IEnumerable<FloodZone> zones) : IFloo
                 if (bestHit is null ||
                     bestHit.Proximity != FloodZoneProximity.Inside ||
                     zone.Risk > bestHit.Zone.Risk)
-                {
                     bestHit = new FloodZoneHit
                     {
                         Zone = zone,
                         DistanceMetres = 0,
                         Proximity = FloodZoneProximity.Inside
                     };
-                }
                 continue;
             }
 
@@ -65,27 +60,21 @@ public sealed class InMemoryFloodZoneIndex(IEnumerable<FloodZone> zones) : IFloo
                 continue;
 
             if (bestHit is null)
-            {
                 bestHit = new FloodZoneHit
                 {
                     Zone = zone,
                     DistanceMetres = metreDistance,
                     Proximity = FloodZoneProximity.Near
                 };
-            }
             else if (bestHit.Proximity == FloodZoneProximity.Near)
-            {
                 if (zone.Risk > bestHit.Zone.Risk ||
                     (zone.Risk == bestHit.Zone.Risk && metreDistance < bestHit.DistanceMetres))
-                {
                     bestHit = new FloodZoneHit
                     {
                         Zone = zone,
                         DistanceMetres = metreDistance,
                         Proximity = FloodZoneProximity.Near
                     };
-                }
-            }
         }
 
         return bestHit;

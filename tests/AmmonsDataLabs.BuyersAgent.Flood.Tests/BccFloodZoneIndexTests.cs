@@ -1,24 +1,11 @@
 using AmmonsDataLabs.BuyersAgent.Flood.Configuration;
 using AmmonsDataLabs.BuyersAgent.Geo;
 using Microsoft.Extensions.Options;
-using Xunit;
 
 namespace AmmonsDataLabs.BuyersAgent.Flood.Tests;
 
 public class BccFloodZoneIndexTests
 {
-    private sealed class StubFloodZoneDataLoader(IEnumerable<FloodZone> zones) : IFloodZoneDataLoader
-    {
-        public int LoadCalls { get; private set; }
-        private readonly IReadOnlyList<FloodZone> _zones = zones.ToList();
-
-        public IReadOnlyList<FloodZone> LoadZones(FloodDataOptions options, CancellationToken cancellationToken = default)
-        {
-            LoadCalls++;
-            return _zones;
-        }
-    }
-
     private static FloodZone HighRiskZone()
     {
         var poly = GeoFactory.CreatePolygon(
@@ -77,5 +64,18 @@ public class BccFloodZoneIndexTests
         var zone = index.FindZoneForPoint(new GeoPoint(-27.46, 153.02));
 
         Assert.Null(zone);
+    }
+
+    private sealed class StubFloodZoneDataLoader(IEnumerable<FloodZone> zones) : IFloodZoneDataLoader
+    {
+        private readonly IReadOnlyList<FloodZone> _zones = zones.ToList();
+        public int LoadCalls { get; private set; }
+
+        public IReadOnlyList<FloodZone> LoadZones(FloodDataOptions options,
+            CancellationToken cancellationToken = default)
+        {
+            LoadCalls++;
+            return _zones;
+        }
     }
 }

@@ -16,8 +16,11 @@ public sealed class InMemoryBccParcelMetricsIndex(
         PropertyNameCaseInsensitive = true
     };
 
-    private readonly IReadOnlyDictionary<string, BccMetricsSnapshot> _byLotPlan = LoadFromLines(parcelJsonLines, MetricsScope.Parcel);
-    private readonly IReadOnlyDictionary<string, BccMetricsSnapshot> _byPlan = LoadFromLines(planJsonLines, MetricsScope.PlanFallback);
+    private readonly IReadOnlyDictionary<string, BccMetricsSnapshot> _byLotPlan =
+        LoadFromLines(parcelJsonLines, MetricsScope.Parcel);
+
+    private readonly IReadOnlyDictionary<string, BccMetricsSnapshot> _byPlan =
+        LoadFromLines(planJsonLines, MetricsScope.PlanFallback);
 
     public bool TryGet(string lotPlan, out BccMetricsSnapshot metrics)
     {
@@ -86,10 +89,7 @@ public sealed class InMemoryBccParcelMetricsIndex(
             };
 
             var key = scope == MetricsScope.Parcel ? dto.Lotplan : dto.Plan;
-            if (!string.IsNullOrEmpty(key))
-            {
-                dict[key] = snapshot;
-            }
+            if (!string.IsNullOrEmpty(key)) dict[key] = snapshot;
         }
 
         return dict;

@@ -1,6 +1,6 @@
 using Parquet;
-using Parquet.Schema;
 using Parquet.Data;
+using Parquet.Schema;
 
 namespace AmmonsDataLabs.BuyersAgent.Flood.DataPrep.Tests.Helpers;
 

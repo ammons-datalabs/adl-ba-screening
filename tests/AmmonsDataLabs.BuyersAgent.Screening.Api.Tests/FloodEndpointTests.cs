@@ -14,6 +14,7 @@ public class FloodEndpointTests(CustomWebApplicationFactory factory) : IClassFix
     private const string UnknownAddress = "789 Unknown Avenue, Sydney NSW";
 
     private readonly HttpClient _client = factory.CreateClient();
+
     private readonly JsonSerializerOptions _jsonOptions = new()
     {
         PropertyNameCaseInsensitive = true,

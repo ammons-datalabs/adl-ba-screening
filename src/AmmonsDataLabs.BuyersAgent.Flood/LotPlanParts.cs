@@ -7,6 +7,17 @@ namespace AmmonsDataLabs.BuyersAgent.Flood;
 public readonly record struct LotPlanParts(string Lot, string Plan)
 {
     /// <summary>
+    /// Gets the common property lot identifier (lot 0) for this plan.
+    /// Used as a fallback for multi-lot developments where individual lots may not have metrics.
+    /// </summary>
+    public string CommonLotPlan => $"0{Plan}";
+
+    /// <summary>
+    /// Returns true if this is the common property lot (lot 0).
+    /// </summary>
+    public bool IsCommonLot => Lot == "0";
+
+    /// <summary>
     /// Parses a lotplan string into its lot and plan components.
     /// </summary>
     /// <param name="lotplan">The lotplan string (e.g., "3GTP102995")</param>
@@ -18,7 +29,7 @@ public readonly record struct LotPlanParts(string Lot, string Plan)
         if (string.IsNullOrWhiteSpace(lotplan))
             throw new ArgumentException("lotplan cannot be null or empty", nameof(lotplan));
 
-        int i = 0;
+        var i = 0;
         while (i < lotplan.Length && char.IsDigit(lotplan[i]))
             i++;
 
@@ -30,15 +41,4 @@ public readonly record struct LotPlanParts(string Lot, string Plan)
 
         return new LotPlanParts(lot, plan);
     }
-
-    /// <summary>
-    /// Gets the common property lot identifier (lot 0) for this plan.
-    /// Used as a fallback for multi-lot developments where individual lots may not have metrics.
-    /// </summary>
-    public string CommonLotPlan => $"0{Plan}";
-
-    /// <summary>
-    /// Returns true if this is the common property lot (lot 0).
-    /// </summary>
-    public bool IsCommonLot => Lot == "0";
 }

@@ -11,20 +11,18 @@ public static class FloodEndpoints
                 IFloodScreeningService svc,
                 CancellationToken ct) =>
             {
-                if (req.Properties is null || req.Properties.Count == 0)
-                {
+                if (req.Properties.Count == 0)
                     return Results.ValidationProblem(new Dictionary<string, string[]>
                     {
                         ["properties"] = ["At least one property is required."]
                     });
-                }
 
                 var result = await svc.ScreenAsync(req, ct);
                 return Results.Ok(result);
             })
             .WithName("FloodLookup")
             .WithOpenApi();
-            
+
         return app;
     }
 }

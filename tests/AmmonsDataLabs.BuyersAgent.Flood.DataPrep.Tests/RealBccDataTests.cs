@@ -1,8 +1,6 @@
-using AmmonsDataLabs.BuyersAgent.Flood;
 using AmmonsDataLabs.BuyersAgent.Flood.Configuration;
 using AmmonsDataLabs.BuyersAgent.Flood.DataPrep.Tests.Helpers;
 using NetTopologySuite.Geometries;
-using Xunit;
 
 namespace AmmonsDataLabs.BuyersAgent.Flood.DataPrep.Tests;
 
@@ -18,10 +16,7 @@ public class RealBccDataTests : IDisposable
 
     public void Dispose()
     {
-        if (Directory.Exists(_tempDir))
-        {
-            Directory.Delete(_tempDir, recursive: true);
-        }
+        if (Directory.Exists(_tempDir)) Directory.Delete(_tempDir, true);
         GC.SuppressFinalize(this);
     }
 

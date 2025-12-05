@@ -3,7 +3,6 @@ using System.Text.Json;
 using AmmonsDataLabs.BuyersAgent.Flood.Configuration;
 using AmmonsDataLabs.BuyersAgent.Geo;
 using NetTopologySuite.IO;
-using Xunit;
 
 namespace AmmonsDataLabs.BuyersAgent.Flood.Tests;
 
@@ -19,10 +18,7 @@ public class NdjsonFloodZoneDataLoaderTests : IDisposable
 
     public void Dispose()
     {
-        if (Directory.Exists(_tempDir))
-        {
-            Directory.Delete(_tempDir, recursive: true);
-        }
+        if (Directory.Exists(_tempDir)) Directory.Delete(_tempDir, true);
         GC.SuppressFinalize(this);
     }
 

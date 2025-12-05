@@ -12,14 +12,12 @@ public sealed class DummyGeocodingService : IGeocodingService
     public Task<GeocodingResult> GeocodeAsync(string address, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(address))
-        {
             return Task.FromResult(new GeocodingResult
             {
                 Query = address ?? string.Empty,
                 Status = GeocodingStatus.Error,
                 Provider = nameof(DummyGeocodingService)
             });
-        }
 
         return Task.FromResult(new GeocodingResult
         {

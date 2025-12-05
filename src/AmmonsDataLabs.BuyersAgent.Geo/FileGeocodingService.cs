@@ -7,14 +7,14 @@ namespace AmmonsDataLabs.BuyersAgent.Geo;
 
 public sealed partial class FileGeocodingService : IGeocodingService
 {
-    private readonly FileGeocodingOptions _options;
-    private readonly Lazy<Dictionary<string, AddressEntry>> _addressLookup;
-
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         PropertyNameCaseInsensitive = true,
         PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower
     };
+
+    private readonly Lazy<Dictionary<string, AddressEntry>> _addressLookup;
+    private readonly FileGeocodingOptions _options;
 
     public FileGeocodingService(IOptions<FileGeocodingOptions> options)
     {
@@ -25,14 +25,12 @@ public sealed partial class FileGeocodingService : IGeocodingService
     public Task<GeocodingResult> GeocodeAsync(string address, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(address))
-        {
             return Task.FromResult(new GeocodingResult
             {
                 Query = address ?? string.Empty,
                 Status = GeocodingStatus.Error,
                 Provider = "FileGeocoding"
             });
-        }
 
         Dictionary<string, AddressEntry> lookup;
         try
@@ -54,7 +52,6 @@ public sealed partial class FileGeocodingService : IGeocodingService
         {
             var key = BuildLookupKey(parsed.Value);
             if (lookup.TryGetValue(key, out var entry))
-            {
                 return Task.FromResult(new GeocodingResult
                 {
                     Query = address,
@@ -64,7 +61,6 @@ public sealed partial class FileGeocodingService : IGeocodingService
                     Provider = "FileGeocoding",
                     LotPlan = entry.LotPlan
                 });
-            }
         }
 
         return Task.FromResult(new GeocodingResult
@@ -79,10 +75,7 @@ public sealed partial class FileGeocodingService : IGeocodingService
     {
         var lookup = new Dictionary<string, AddressEntry>(StringComparer.OrdinalIgnoreCase);
 
-        if (string.IsNullOrWhiteSpace(_options.FilePath) || !File.Exists(_options.FilePath))
-        {
-            return lookup;
-        }
+        if (string.IsNullOrWhiteSpace(_options.FilePath) || !File.Exists(_options.FilePath)) return lookup;
 
         foreach (var line in File.ReadLines(_options.FilePath))
         {
@@ -93,9 +86,7 @@ public sealed partial class FileGeocodingService : IGeocodingService
 
             GeoPoint? location = null;
             if (parcel.Latitude.HasValue && parcel.Longitude.HasValue)
-            {
                 location = new GeoPoint(parcel.Latitude.Value, parcel.Longitude.Value);
-            }
 
             var entry = new AddressEntry(location, parcel.LotPlan, parcel.NormalizedAddress);
 
@@ -105,10 +96,7 @@ public sealed partial class FileGeocodingService : IGeocodingService
                 NormalizeStreetName(parcel.CorridorName, parcel.CorridorSuffixCode),
                 parcel.Suburb);
 
-            if (!string.IsNullOrEmpty(key))
-            {
-                lookup[key] = entry;
-            }
+            if (!string.IsNullOrEmpty(key)) lookup[key] = entry;
         }
 
         return lookup;
@@ -116,12 +104,14 @@ public sealed partial class FileGeocodingService : IGeocodingService
 
     private static string BuildLookupKey(string? unit, string? house, string? street, string? suburb)
     {
-        return $"{unit?.ToUpperInvariant() ?? ""}|{house?.ToUpperInvariant() ?? ""}|{street?.ToUpperInvariant() ?? ""}|{suburb?.ToUpperInvariant() ?? ""}";
+        return
+            $"{unit?.ToUpperInvariant() ?? ""}|{house?.ToUpperInvariant() ?? ""}|{street?.ToUpperInvariant() ?? ""}|{suburb?.ToUpperInvariant() ?? ""}";
     }
 
     private static string BuildLookupKey((string? unit, string? house, string? street, string? suburb) parsed)
     {
-        return $"{parsed.unit?.ToUpperInvariant() ?? ""}|{parsed.house?.ToUpperInvariant() ?? ""}|{parsed.street?.ToUpperInvariant() ?? ""}|{parsed.suburb?.ToUpperInvariant() ?? ""}";
+        return
+            $"{parsed.unit?.ToUpperInvariant() ?? ""}|{parsed.house?.ToUpperInvariant() ?? ""}|{parsed.street?.ToUpperInvariant() ?? ""}|{parsed.suburb?.ToUpperInvariant() ?? ""}";
     }
 
     private static string NormalizeStreetName(string? corridorName, string? suffixCode)
@@ -188,12 +178,8 @@ public sealed partial class FileGeocodingService : IGeocodingService
         string[] stateCodes = ["QLD", "NSW", "VIC", "SA", "WA", "TAS", "NT", "ACT"];
 
         foreach (var state in stateCodes)
-        {
             if (upper.EndsWith($" {state}"))
-            {
                 return suburb[..^(state.Length + 1)].Trim();
-            }
-        }
 
         return suburb;
     }
@@ -209,7 +195,9 @@ public sealed partial class FileGeocodingService : IGeocodingService
         return $"{name} {suffix}";
     }
 
-    [GeneratedRegex(@"^(?:(?<unit>\d+)/)?(?<house>\d+[A-Za-z]?)\s+(?<street>[^,]+?)(?:,\s*(?<suburb>[^,\d]+?))?(?:\s+\d{4})?$", RegexOptions.IgnoreCase)]
+    [GeneratedRegex(
+        @"^(?:(?<unit>\d+)/)?(?<house>\d+[A-Za-z]?)\s+(?<street>[^,]+?)(?:,\s*(?<suburb>[^,\d]+?))?(?:\s+\d{4})?$",
+        RegexOptions.IgnoreCase)]
     private static partial Regex AddressPattern();
 
     private sealed record AddressEntry(GeoPoint? Location, string? LotPlan, string? NormalizedAddress);

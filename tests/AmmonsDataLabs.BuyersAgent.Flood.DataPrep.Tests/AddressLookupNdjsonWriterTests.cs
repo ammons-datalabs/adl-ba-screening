@@ -1,5 +1,4 @@
 using System.Text.Json;
-using Xunit;
 
 namespace AmmonsDataLabs.BuyersAgent.Flood.DataPrep.Tests;
 
@@ -60,7 +59,7 @@ public class AddressLookupNdjsonWriterTests
             {
                 LotPlan = "1RP84382",
                 Plan = "RP84382",
-                HouseNumber = "117",
+                HouseNumber = "117"
                 // UnitNumber is null
                 // HouseNumberSuffix is null
             }
@@ -98,8 +97,8 @@ public class AddressLookupNdjsonWriterTests
 
         // Parse and verify values
         var doc = JsonDocument.Parse(json);
-        Assert.Equal(-27.549067, doc.RootElement.GetProperty("latitude").GetDouble(), precision: 6);
-        Assert.Equal(152.911153, doc.RootElement.GetProperty("longitude").GetDouble(), precision: 6);
+        Assert.Equal(-27.549067, doc.RootElement.GetProperty("latitude").GetDouble(), 6);
+        Assert.Equal(152.911153, doc.RootElement.GetProperty("longitude").GetDouble(), 6);
     }
 
     [Fact]

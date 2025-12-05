@@ -9,11 +9,11 @@ public static class FloodLikelihoodMapper
 
         return likelihood.Trim().ToLowerInvariant() switch
         {
-            "extreme" => FloodRisk.High,      // Map Extreme to High (our highest level)
+            "extreme" => FloodRisk.High, // Map Extreme to High (our highest level)
             "high" => FloodRisk.High,
             "medium" => FloodRisk.Medium,
             "low" => FloodRisk.Low,
-            "very low" => FloodRisk.Low,      // Map Very Low to Low (our lowest level)
+            "very low" => FloodRisk.Low, // Map Very Low to Low (our lowest level)
             _ => FloodRisk.Unknown
         };
     }

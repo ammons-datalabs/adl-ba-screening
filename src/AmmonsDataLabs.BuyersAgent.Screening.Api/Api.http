@@ -8,10 +8,14 @@ POST {{Api_HostAddress}}/v1/screening/flood/lookup
 Content-Type: application/json
 
 {
-"properties": [
-  { "address": "123 Fake Street, Brisbane QLD" },
-  { "address": "456 Main Road, Mount Gravatt QLD" }
-]
+  "properties": [
+    {
+      "address": "123 Fake Street, Brisbane QLD"
+    },
+    {
+      "address": "456 Main Road, Mount Gravatt QLD"
+    }
+  ]
 }
 
 ### Flood lookup - single property
@@ -19,9 +23,11 @@ POST {{Api_HostAddress}}/v1/screening/flood/lookup
 Content-Type: application/json
 
 {
-"properties": [
-  { "address": "10 River Terrace, Auchenflower QLD" }
-]
+  "properties": [
+    {
+      "address": "10 River Terrace, Auchenflower QLD"
+    }
+  ]
 }
 
 ### Flood lookup - empty list (should return 400)
@@ -29,6 +35,7 @@ POST {{Api_HostAddress}}/v1/screening/flood/lookup
 Content-Type: application/json
 
 {
-"properties": []
+  "properties": []
 }
+
 ###

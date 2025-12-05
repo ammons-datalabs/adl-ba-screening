@@ -55,5 +55,4 @@ public class SimpleFloodDataProviderTests
 
         Assert.Equal(FloodRisk.High, result.Risk);
     }
-
 }

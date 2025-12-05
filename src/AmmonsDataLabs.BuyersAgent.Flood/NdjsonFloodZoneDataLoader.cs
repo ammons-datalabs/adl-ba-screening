@@ -7,6 +7,7 @@ namespace AmmonsDataLabs.BuyersAgent.Flood;
 public sealed class NdjsonFloodZoneDataLoader : IFloodZoneDataLoader
 {
     private static readonly WKBReader WkbReader = new();
+
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         PropertyNameCaseInsensitive = true
@@ -16,10 +17,7 @@ public sealed class NdjsonFloodZoneDataLoader : IFloodZoneDataLoader
     {
         var extentsPath = Path.Combine(options.DataRoot, options.ExtentsFile);
 
-        if (!File.Exists(extentsPath))
-        {
-            return [];
-        }
+        if (!File.Exists(extentsPath)) return [];
 
         var zones = new List<FloodZone>();
 
@@ -37,7 +35,7 @@ public sealed class NdjsonFloodZoneDataLoader : IFloodZoneDataLoader
             var wkb = Convert.FromBase64String(record.PolygonWkbBase64);
             var geometry = WkbReader.Read(wkb);
 
-            var risk = Enum.TryParse<FloodRisk>(record.Risk, ignoreCase: true, out var parsed)
+            var risk = Enum.TryParse<FloodRisk>(record.Risk, true, out var parsed)
                 ? parsed
                 : FloodRisk.Unknown;
 

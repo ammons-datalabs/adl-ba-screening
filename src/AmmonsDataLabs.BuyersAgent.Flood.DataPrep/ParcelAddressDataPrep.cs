@@ -1,4 +1,3 @@
-using System.Text.Json;
 using NetTopologySuite.Features;
 using NetTopologySuite.Geometries;
 using NetTopologySuite.IO;
@@ -99,33 +98,19 @@ public static class ParcelAddressDataPrep
             streetNum += houseNumberSuffix;
 
         if (!string.IsNullOrEmpty(unitNumber) && !string.IsNullOrEmpty(streetNum))
-        {
             parts.Add($"{unitNumber}/{streetNum}");
-        }
-        else if (!string.IsNullOrEmpty(streetNum))
-        {
-            parts.Add(streetNum);
-        }
+        else if (!string.IsNullOrEmpty(streetNum)) parts.Add(streetNum);
 
         // Street name
         var street = corridorName;
-        if (!string.IsNullOrEmpty(corridorSuffixCode))
-        {
-            street += " " + ExpandStreetSuffix(corridorSuffixCode);
-        }
+        if (!string.IsNullOrEmpty(corridorSuffixCode)) street += " " + ExpandStreetSuffix(corridorSuffixCode);
         parts.Add(street);
 
         // Suburb
-        if (!string.IsNullOrEmpty(suburb))
-        {
-            parts.Add(suburb);
-        }
+        if (!string.IsNullOrEmpty(suburb)) parts.Add(suburb);
 
         // Postcode
-        if (!string.IsNullOrEmpty(postcode))
-        {
-            parts.Add(postcode);
-        }
+        if (!string.IsNullOrEmpty(postcode)) parts.Add(postcode);
 
         return string.Join(", ", parts);
     }

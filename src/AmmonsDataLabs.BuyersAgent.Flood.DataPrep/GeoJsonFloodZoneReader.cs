@@ -1,5 +1,6 @@
 using NetTopologySuite.Features;
 using NetTopologySuite.IO;
+using Newtonsoft.Json;
 
 namespace AmmonsDataLabs.BuyersAgent.Flood.DataPrep;
 
@@ -22,7 +23,7 @@ public static class GeoJsonFloodZoneReader
     {
         var serializer = GeoJsonSerializer.Create();
         using var streamReader = new StreamReader(stream);
-        using var jsonReader = new Newtonsoft.Json.JsonTextReader(streamReader);
+        using var jsonReader = new JsonTextReader(streamReader);
 
         var featureCollection = serializer.Deserialize<FeatureCollection>(jsonReader);
         if (featureCollection is null)

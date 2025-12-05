@@ -6,10 +6,12 @@ namespace AmmonsDataLabs.BuyersAgent.Geo;
 public static class GeoFactory
 {
     private static readonly GeometryFactory Factory =
-        NtsGeometryServices.Instance.CreateGeometryFactory(srid: 4326);
+        NtsGeometryServices.Instance.CreateGeometryFactory(4326);
 
-    public static Point CreatePoint(GeoPoint point) =>
-        Factory.CreatePoint(new Coordinate(point.Longitude, point.Latitude));
+    public static Point CreatePoint(GeoPoint point)
+    {
+        return Factory.CreatePoint(new Coordinate(point.Longitude, point.Latitude));
+    }
 
     public static Polygon CreatePolygon(params GeoPoint[] vertices)
     {

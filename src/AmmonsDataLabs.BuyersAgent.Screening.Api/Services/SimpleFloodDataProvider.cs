@@ -12,7 +12,7 @@ public class SimpleFloodDataProvider : IFloodDataProvider
     // Patters suggesting proximity to flood-prone infrastructure
     private static readonly string[] HighRiskPatterns =
         ["Main Rd", "Main Road", "Motorway", "Highway"];
-    
+
     // Patterns suggesting proximity to waterways
     private static readonly string[] MediumRiskPatterns =
         ["Ck", "Creek", "River"];
@@ -27,26 +27,22 @@ public class SimpleFloodDataProvider : IFloodDataProvider
     {
         // Check high-risk patterns first
         if (ContainsAny(address, HighRiskPatterns))
-        {
             return new FloodLookupResult
             {
                 Address = address,
                 Risk = FloodRisk.High,
                 Reasons = ["Near major road (demo rule - pending real flood data)."]
             };
-        }
-        
+
         // Check medium-risk patterns
         if (ContainsAny(address, MediumRiskPatterns))
-        {
             return new FloodLookupResult
             {
                 Address = address,
-                Risk =  FloodRisk.Medium,
+                Risk = FloodRisk.Medium,
                 Reasons = ["Near waterway (demo rule - pending real flood data)."]
             };
-        }
-        
+
         // Default
         return new FloodLookupResult
         {

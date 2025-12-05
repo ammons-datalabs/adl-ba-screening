@@ -1,4 +1,5 @@
-using Xunit;
+using AmmonsDataLabs.BuyersAgent.Flood.Configuration;
+using Microsoft.Extensions.Options;
 
 namespace AmmonsDataLabs.BuyersAgent.Flood.Tests;
 
@@ -8,11 +9,10 @@ public class BccParcelMetricsIndexTests
     public void TryGet_ParcelHit_ReturnsParcelScope()
     {
         var index = BccParcelMetricsIndexTestFactory.Create(
-            parcelJsonLines: new[]
-            {
+            [
                 """{"lotplan":"3GTP102995","plan":"GTP102995","overall_risk":"High","river_risk":"High","creek_risk":"Unknown","storm_tide_risk":"Unknown","has_flood_info":true,"has_overland_flow":false,"evidence_metrics":["FL_HIGH_RIVER"]}"""
-            },
-            planJsonLines: []);
+            ],
+            []);
 
         Assert.True(index.TryGet("3GTP102995", out var metrics));
         Assert.Equal(MetricsScope.Parcel, metrics.Scope);
@@ -26,14 +26,12 @@ public class BccParcelMetricsIndexTests
     public void TryGet_PlanFallback_WhenParcelMissing()
     {
         var index = BccParcelMetricsIndexTestFactory.Create(
-            parcelJsonLines: new[]
-            {
+            [
                 """{"lotplan":"1GTP102995","plan":"GTP102995","overall_risk":"High","river_risk":"High","creek_risk":"Unknown","storm_tide_risk":"Unknown","has_flood_info":true,"has_overland_flow":false,"evidence_metrics":[]}"""
-            },
-            planJsonLines: new[]
-            {
+            ],
+            [
                 """{"lotplan":"PLAN:GTP102995","plan":"GTP102995","overall_risk":"High","river_risk":"High","creek_risk":"Unknown","storm_tide_risk":"Unknown","has_flood_info":true,"has_overland_flow":false,"evidence_metrics":["FL_HIGH_RIVER"]}"""
-            });
+            ]);
 
         // Lot 3 doesn't exist in parcel data, should fallback to plan
         Assert.True(index.TryGet("3GTP102995", out var metrics));
@@ -56,14 +54,12 @@ public class BccParcelMetricsIndexTests
     {
         // Even if plan has higher risk, parcel metrics should be used
         var index = BccParcelMetricsIndexTestFactory.Create(
-            parcelJsonLines: new[]
-            {
+            [
                 """{"lotplan":"1GTP102995","plan":"GTP102995","overall_risk":"Low","river_risk":"Low","creek_risk":"Unknown","storm_tide_risk":"Unknown","has_flood_info":true,"has_overland_flow":false,"evidence_metrics":[]}"""
-            },
-            planJsonLines: new[]
-            {
+            ],
+            [
                 """{"lotplan":"PLAN:GTP102995","plan":"GTP102995","overall_risk":"High","river_risk":"High","creek_risk":"Unknown","storm_tide_risk":"Unknown","has_flood_info":true,"has_overland_flow":false,"evidence_metrics":["FL_HIGH_RIVER"]}"""
-            });
+            ]);
 
         Assert.True(index.TryGet("1GTP102995", out var metrics));
         Assert.Equal(MetricsScope.Parcel, metrics.Scope);
@@ -74,11 +70,10 @@ public class BccParcelMetricsIndexTests
     public void TryGet_CaseInsensitive()
     {
         var index = BccParcelMetricsIndexTestFactory.Create(
-            parcelJsonLines: new[]
-            {
+            [
                 """{"lotplan":"3GTP102995","plan":"GTP102995","overall_risk":"High","river_risk":"High","creek_risk":"Unknown","storm_tide_risk":"Unknown","has_flood_info":true,"has_overland_flow":false,"evidence_metrics":[]}"""
-            },
-            planJsonLines: []);
+            ],
+            []);
 
         Assert.True(index.TryGet("3gtp102995", out var metrics));
         Assert.Equal(FloodRisk.High, metrics.OverallRisk);
@@ -88,11 +83,10 @@ public class BccParcelMetricsIndexTests
     public void TryGet_PlanFallback_CaseInsensitive()
     {
         var index = BccParcelMetricsIndexTestFactory.Create(
-            parcelJsonLines: [],
-            planJsonLines: new[]
-            {
+            [],
+            [
                 """{"lotplan":"PLAN:GTP102995","plan":"GTP102995","overall_risk":"Medium","river_risk":"Medium","creek_risk":"Unknown","storm_tide_risk":"Unknown","has_flood_info":true,"has_overland_flow":false,"evidence_metrics":[]}"""
-            });
+            ]);
 
         Assert.True(index.TryGet("5gtp102995", out var metrics));
         Assert.Equal(MetricsScope.PlanFallback, metrics.Scope);
@@ -103,11 +97,10 @@ public class BccParcelMetricsIndexTests
     public void TryGet_InvalidLotPlanFormat_ReturnsFalse()
     {
         var index = BccParcelMetricsIndexTestFactory.Create(
-            parcelJsonLines: [],
-            planJsonLines: new[]
-            {
+            [],
+            [
                 """{"lotplan":"PLAN:GTP102995","plan":"GTP102995","overall_risk":"Medium","river_risk":"Medium","creek_risk":"Unknown","storm_tide_risk":"Unknown","has_flood_info":true,"has_overland_flow":false,"evidence_metrics":[]}"""
-            });
+            ]);
 
         // Invalid lotplan format (no digits) should return false due to FormatException catch
         Assert.False(index.TryGet("INVALID", out _));
@@ -119,13 +112,12 @@ public class BccParcelMetricsIndexTests
     public void TryGet_SkipsEmptyAndNullLines()
     {
         var index = BccParcelMetricsIndexTestFactory.Create(
-            parcelJsonLines: new[]
-            {
+            [
                 "",
                 "   ",
                 """{"lotplan":"1RP12345","plan":"RP12345","overall_risk":"Low","river_risk":"Low","creek_risk":"Unknown","storm_tide_risk":"Unknown","has_flood_info":true,"has_overland_flow":false,"evidence_metrics":[]}"""
-            },
-            planJsonLines: []);
+            ],
+            []);
 
         // Should skip empty lines and still load valid data
         Assert.True(index.TryGet("1RP12345", out var metrics));
@@ -136,15 +128,14 @@ public class BccParcelMetricsIndexTests
     public void TryGet_ParsesAllRiskLevels()
     {
         var index = BccParcelMetricsIndexTestFactory.Create(
-            parcelJsonLines: new[]
-            {
+            [
                 """{"lotplan":"1RP11111","plan":"RP11111","overall_risk":"High","river_risk":"Unknown","creek_risk":"Unknown","storm_tide_risk":"Unknown","has_flood_info":true,"has_overland_flow":false,"evidence_metrics":[]}""",
                 """{"lotplan":"2RP22222","plan":"RP22222","overall_risk":"Medium","river_risk":"Unknown","creek_risk":"Unknown","storm_tide_risk":"Unknown","has_flood_info":true,"has_overland_flow":false,"evidence_metrics":[]}""",
                 """{"lotplan":"3RP33333","plan":"RP33333","overall_risk":"Low","river_risk":"Unknown","creek_risk":"Unknown","storm_tide_risk":"Unknown","has_flood_info":true,"has_overland_flow":false,"evidence_metrics":[]}""",
                 """{"lotplan":"4RP44444","plan":"RP44444","overall_risk":"None","river_risk":"Unknown","creek_risk":"Unknown","storm_tide_risk":"Unknown","has_flood_info":false,"has_overland_flow":false,"evidence_metrics":[]}""",
                 """{"lotplan":"5RP55555","plan":"RP55555","overall_risk":"InvalidValue","river_risk":"Unknown","creek_risk":"Unknown","storm_tide_risk":"Unknown","has_flood_info":true,"has_overland_flow":false,"evidence_metrics":[]}"""
-            },
-            planJsonLines: []);
+            ],
+            []);
 
         Assert.True(index.TryGet("1RP11111", out var high));
         Assert.Equal(FloodRisk.High, high.OverallRisk);
@@ -166,11 +157,10 @@ public class BccParcelMetricsIndexTests
     public void TryGet_HasOverlandFlow_SetsOverlandFlowRisk()
     {
         var index = BccParcelMetricsIndexTestFactory.Create(
-            parcelJsonLines: new[]
-            {
+            [
                 """{"lotplan":"1RP12345","plan":"RP12345","overall_risk":"Medium","river_risk":"Low","creek_risk":"Low","storm_tide_risk":"None","has_flood_info":true,"has_overland_flow":true,"evidence_metrics":["FL_OVERLAND"]}"""
-            },
-            planJsonLines: []);
+            ],
+            []);
 
         Assert.True(index.TryGet("1RP12345", out var metrics));
         Assert.Equal(FloodRisk.Unknown, metrics.OverlandFlowRisk); // has_overland_flow=true -> Unknown
@@ -181,11 +171,10 @@ public class BccParcelMetricsIndexTests
     public void TryGet_NoOverlandFlow_SetsOverlandFlowRiskToNone()
     {
         var index = BccParcelMetricsIndexTestFactory.Create(
-            parcelJsonLines: new[]
-            {
+            [
                 """{"lotplan":"1RP12345","plan":"RP12345","overall_risk":"Low","river_risk":"Low","creek_risk":"Unknown","storm_tide_risk":"Unknown","has_flood_info":true,"has_overland_flow":false,"evidence_metrics":[]}"""
-            },
-            planJsonLines: []);
+            ],
+            []);
 
         Assert.True(index.TryGet("1RP12345", out var metrics));
         Assert.Equal(FloodRisk.None, metrics.OverlandFlowRisk); // has_overland_flow=false -> None
@@ -217,10 +206,7 @@ public class NdjsonBccParcelMetricsIndexTests : IDisposable
 
     public void Dispose()
     {
-        if (Directory.Exists(_tempDir))
-        {
-            Directory.Delete(_tempDir, recursive: true);
-        }
+        if (Directory.Exists(_tempDir)) Directory.Delete(_tempDir, true);
         GC.SuppressFinalize(this);
     }
 
@@ -230,9 +216,10 @@ public class NdjsonBccParcelMetricsIndexTests : IDisposable
         // Write parcel metrics file
         var parcelPath = Path.Combine(_tempDir, "parcel-metrics.ndjson");
         File.WriteAllText(parcelPath,
-            """{"lotplan":"3GTP102995","plan":"GTP102995","overall_risk":"High","river_risk":"High","creek_risk":"Unknown","storm_tide_risk":"Unknown","has_flood_info":true,"has_overland_flow":false,"evidence_metrics":["FL_HIGH_RIVER"]}""" + "\n");
+            """{"lotplan":"3GTP102995","plan":"GTP102995","overall_risk":"High","river_risk":"High","creek_risk":"Unknown","storm_tide_risk":"Unknown","has_flood_info":true,"has_overland_flow":false,"evidence_metrics":["FL_HIGH_RIVER"]}""" +
+            "\n");
 
-        var options = Microsoft.Extensions.Options.Options.Create(new Configuration.FloodDataOptions
+        var options = Options.Create(new FloodDataOptions
         {
             DataRoot = _tempDir,
             BccParcelMetricsParcelFile = "parcel-metrics.ndjson",
@@ -252,9 +239,10 @@ public class NdjsonBccParcelMetricsIndexTests : IDisposable
         // Write plan metrics file only (no parcel file)
         var planPath = Path.Combine(_tempDir, "plan-metrics.ndjson");
         File.WriteAllText(planPath,
-            """{"lotplan":"PLAN:GTP102995","plan":"GTP102995","overall_risk":"Medium","river_risk":"Medium","creek_risk":"Unknown","storm_tide_risk":"Unknown","has_flood_info":true,"has_overland_flow":true,"evidence_metrics":["FL_MED_RIVER"]}""" + "\n");
+            """{"lotplan":"PLAN:GTP102995","plan":"GTP102995","overall_risk":"Medium","river_risk":"Medium","creek_risk":"Unknown","storm_tide_risk":"Unknown","has_flood_info":true,"has_overland_flow":true,"evidence_metrics":["FL_MED_RIVER"]}""" +
+            "\n");
 
-        var options = Microsoft.Extensions.Options.Options.Create(new Configuration.FloodDataOptions
+        var options = Options.Create(new FloodDataOptions
         {
             DataRoot = _tempDir,
             BccParcelMetricsParcelFile = "parcel-metrics.ndjson", // doesn't exist
@@ -272,7 +260,7 @@ public class NdjsonBccParcelMetricsIndexTests : IDisposable
     [Fact]
     public void TryGet_MissingFiles_ReturnsFalse()
     {
-        var options = Microsoft.Extensions.Options.Options.Create(new Configuration.FloodDataOptions
+        var options = Options.Create(new FloodDataOptions
         {
             DataRoot = _tempDir,
             BccParcelMetricsParcelFile = "nonexistent-parcel.ndjson",
@@ -289,9 +277,10 @@ public class NdjsonBccParcelMetricsIndexTests : IDisposable
     {
         var parcelPath = Path.Combine(_tempDir, "parcel-metrics.ndjson");
         File.WriteAllText(parcelPath,
-            """{"lotplan":"1RP84382","plan":"RP84382","overall_risk":"Unknown","river_risk":"Unknown","creek_risk":"Unknown","storm_tide_risk":"Unknown","has_flood_info":false,"has_overland_flow":false,"evidence_metrics":[]}""" + "\n");
+            """{"lotplan":"1RP84382","plan":"RP84382","overall_risk":"Unknown","river_risk":"Unknown","creek_risk":"Unknown","storm_tide_risk":"Unknown","has_flood_info":false,"has_overland_flow":false,"evidence_metrics":[]}""" +
+            "\n");
 
-        var options = Microsoft.Extensions.Options.Options.Create(new Configuration.FloodDataOptions
+        var options = Options.Create(new FloodDataOptions
         {
             DataRoot = _tempDir,
             BccParcelMetricsParcelFile = "parcel-metrics.ndjson",

@@ -1,5 +1,4 @@
 using AmmonsDataLabs.BuyersAgent.Geo;
-using Xunit;
 
 namespace AmmonsDataLabs.BuyersAgent.Flood.Tests;
 
@@ -10,7 +9,7 @@ public class HybridFloodDataProviderTests
     {
         var geocoder = new StubGeocoder("3/241 Horizon Drive, Westlake", "3GTP102995");
         var metricsIndex = new StubMetricsIndex(
-            lotPlan: "3GTP102995",
+            "3GTP102995",
             new BccMetricsSnapshot
             {
                 LotPlanOrPlanKey = "3GTP102995",
@@ -36,8 +35,8 @@ public class HybridFloodDataProviderTests
         var geocoder = new StubGeocoder("3/241 Horizon Drive, Westlake", "3GTP102995");
         // Index returns metrics via plan fallback, not direct parcel
         var metricsIndex = new StubMetricsIndex(
-            lotPlanForDirectHit: null, // no direct parcel hit
-            fallbackFor: "3GTP102995",
+            null, // no direct parcel hit
+            "3GTP102995",
             new BccMetricsSnapshot
             {
                 LotPlanOrPlanKey = "3GTP102995",
@@ -63,7 +62,7 @@ public class HybridFloodDataProviderTests
     {
         var geocoder = new StubGeocoder("117 Fernberg Rd, Paddington", "1RP84382");
         var metricsIndex = new StubMetricsIndex(
-            lotPlan: "1RP84382",
+            "1RP84382",
             new BccMetricsSnapshot
             {
                 LotPlanOrPlanKey = "1RP84382",
@@ -290,7 +289,7 @@ public class HybridFloodDataProviderTests
                 Query = address,
                 NormalizedAddress = address,
                 Location = null, // No location
-                LotPlan = null,  // No lotplan
+                LotPlan = null, // No lotplan
                 Status = GeocodingStatus.Success,
                 Provider = "NoLocationGeocoder"
             });
@@ -299,8 +298,8 @@ public class HybridFloodDataProviderTests
 
     private sealed class StubMetricsIndex : IBccParcelMetricsIndex
     {
-        private readonly string? _lotPlanForDirectHit;
         private readonly string? _fallbackFor;
+        private readonly string? _lotPlanForDirectHit;
         private readonly BccMetricsSnapshot? _snapshot;
 
         public StubMetricsIndex()
@@ -350,9 +349,15 @@ public class HybridFloodDataProviderTests
     {
         private readonly FloodZone? _zone;
 
-        public StubFloodZoneIndex(FloodZone? zone) => _zone = zone;
+        public StubFloodZoneIndex(FloodZone? zone)
+        {
+            _zone = zone;
+        }
 
-        public FloodZone? FindZoneForPoint(GeoPoint point) => _zone;
+        public FloodZone? FindZoneForPoint(GeoPoint point)
+        {
+            return _zone;
+        }
 
         public FloodZoneHit? FindNearestZone(GeoPoint point, double maxDistanceMetres)
         {
@@ -370,8 +375,8 @@ public class HybridFloodDataProviderTests
 
     private sealed class NearFloodZoneIndex : IFloodZoneIndex
     {
-        private readonly FloodZone _zone;
         private readonly double _distance;
+        private readonly FloodZone _zone;
 
         public NearFloodZoneIndex(FloodZone zone, double distance)
         {
@@ -379,7 +384,11 @@ public class HybridFloodDataProviderTests
             _distance = distance;
         }
 
-        public FloodZone? FindZoneForPoint(GeoPoint point) => null; // Not inside
+        public FloodZone? FindZoneForPoint(GeoPoint point)
+        {
+            return null;
+            // Not inside
+        }
 
         public FloodZoneHit? FindNearestZone(GeoPoint point, double maxDistanceMetres)
         {

@@ -1,8 +1,8 @@
-using AmmonsDataLabs.BuyersAgent.Screening.Api.Configuration;
 using System.Text.Json.Serialization;
 using AmmonsDataLabs.BuyersAgent.Flood;
 using AmmonsDataLabs.BuyersAgent.Flood.Configuration;
 using AmmonsDataLabs.BuyersAgent.Geo;
+using AmmonsDataLabs.BuyersAgent.Screening.Api.Configuration;
 using AmmonsDataLabs.BuyersAgent.Screening.Api.Endpoints;
 using AmmonsDataLabs.BuyersAgent.Screening.Api.Services;
 
@@ -65,4 +65,6 @@ app.MapFloodEndpoints();
 app.Run();
 
 // Make Program accessible to tests
-public partial class Program { }
+public partial class Program
+{
+}

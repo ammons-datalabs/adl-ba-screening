@@ -2,21 +2,17 @@ namespace AmmonsDataLabs.BuyersAgent.Flood;
 
 /// <summary>
 /// Indicates the source of flood data used for a lookup result.
-///
 /// The HybridFloodDataProvider uses a tiered lookup strategy, attempting
 /// higher-accuracy sources first before falling back to less precise methods:
-///
 /// - Tier 1 (BccParcelMetrics): Precomputed metrics keyed by lotplan. Highest accuracy,
-///   equivalent to BCC FloodWise reports. Uses parcel boundary intersection with flood
-///   extents computed offline. Currently available for Brisbane City Council.
-///
+/// equivalent to BCC FloodWise reports. Uses parcel boundary intersection with flood
+/// extents computed offline. Currently available for Brisbane City Council.
 /// - Tier 2 (ParcelIntersectsExtents): Runtime intersection of parcel boundary polygon
-///   with flood extents. Intended for councils outside BCC coverage (e.g., Ipswich, Logan)
-///   where precomputed metrics are not available. NOT YET IMPLEMENTED.
-///
+/// with flood extents. Intended for councils outside BCC coverage (e.g., Ipswich, Logan)
+/// where precomputed metrics are not available. NOT YET IMPLEMENTED.
 /// - Tier 3 (PointBuffer): Point-based proximity search using geocoded centroid with
-///   a buffer distance. Fallback when Tier 1/2 data is unavailable. Least accurate due
-///   to geocoding imprecision and lack of parcel boundary awareness.
+/// a buffer distance. Fallback when Tier 1/2 data is unavailable. Least accurate due
+/// to geocoding imprecision and lack of parcel boundary awareness.
 /// </summary>
 public enum FloodDataSource
 {

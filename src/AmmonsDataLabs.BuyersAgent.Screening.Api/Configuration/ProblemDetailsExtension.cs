@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Diagnostics;
+using Microsoft.AspNetCore.Mvc;
 
 namespace AmmonsDataLabs.BuyersAgent.Screening.Api.Configuration;
 
@@ -16,9 +17,7 @@ public static class ProblemDetailsExtensions
                 context.ProblemDetails.Extensions["traceId"] = context.HttpContext.TraceIdentifier;
 
                 if (environment.IsDevelopment() && context.Exception != null)
-                {
                     context.ProblemDetails.Extensions["exceptionDetails"] = context.Exception.ToString();
-                }
             };
         });
 
@@ -36,12 +35,12 @@ public static class ProblemDetailsExtensions
                 var exceptionFeature = context.Features.Get<IExceptionHandlerFeature>();
                 var exception = exceptionFeature?.Error;
 
-                var problemDetails = new Microsoft.AspNetCore.Mvc.ProblemDetails
+                var problemDetails = new ProblemDetails
                 {
                     Instance = context.Request.Path,
-                    Status =  StatusCodes.Status500InternalServerError,
-                    Title =  "An unexpected error occurred",
-                    Detail =  environment.IsDevelopment()
+                    Status = StatusCodes.Status500InternalServerError,
+                    Title = "An unexpected error occurred",
+                    Detail = environment.IsDevelopment()
                         ? exception?.Message
                         : "Please try again later or contact support",
                     Extensions = { ["traceId"] = context.TraceIdentifier }

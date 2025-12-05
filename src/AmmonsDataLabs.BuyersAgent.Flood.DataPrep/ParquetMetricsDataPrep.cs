@@ -9,15 +9,6 @@ namespace AmmonsDataLabs.BuyersAgent.Flood.DataPrep;
 public static class ParquetMetricsDataPrep
 {
     /// <summary>
-    /// Result containing both parcel-level and plan-level aggregated metrics.
-    /// </summary>
-    public sealed class Result
-    {
-        public required IReadOnlyList<BccParcelMetricsRecord> ParcelMetrics { get; init; }
-        public required IReadOnlyList<BccParcelMetricsRecord> PlanMetrics { get; init; }
-    }
-
-    /// <summary>
     /// Processes a BCC parcel metrics parquet file and produces aggregated metrics.
     /// </summary>
     /// <param name="parquetPath">Path to the parquet file</param>
@@ -36,7 +27,7 @@ public static class ParquetMetricsDataPrep
         var metricField = schema.DataFields.First(f => f.Name == "metric");
         var valueField = schema.DataFields.First(f => f.Name == "value");
 
-        for (int rg = 0; rg < reader.RowGroupCount; rg++)
+        for (var rg = 0; rg < reader.RowGroupCount; rg++)
         {
             using var rgReader = reader.OpenRowGroupReader(rg);
 
@@ -48,7 +39,7 @@ public static class ParquetMetricsDataPrep
             var metrics = (string?[])metricColumn.Data;
             var values = (string?[])valueColumn.Data;
 
-            for (int i = 0; i < lotplans.Length; i++)
+            for (var i = 0; i < lotplans.Length; i++)
             {
                 var lotplan = lotplans[i];
                 var metric = metrics[i];
@@ -89,7 +80,7 @@ public static class ParquetMetricsDataPrep
             .ToList();
 
         var planMetrics = byPlan
-            .Select(kvp => kvp.Value.ToRecord(lotPlan: $"PLAN:{kvp.Key}", plan: kvp.Key))
+            .Select(kvp => kvp.Value.ToRecord($"PLAN:{kvp.Key}", kvp.Key))
             .ToList();
 
         return new Result
@@ -97,5 +88,14 @@ public static class ParquetMetricsDataPrep
             ParcelMetrics = parcelMetrics,
             PlanMetrics = planMetrics
         };
+    }
+
+    /// <summary>
+    /// Result containing both parcel-level and plan-level aggregated metrics.
+    /// </summary>
+    public sealed class Result
+    {
+        public required IReadOnlyList<BccParcelMetricsRecord> ParcelMetrics { get; init; }
+        public required IReadOnlyList<BccParcelMetricsRecord> PlanMetrics { get; init; }
     }
 }
