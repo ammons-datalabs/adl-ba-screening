@@ -1,4 +1,5 @@
 using AmmonsDataLabs.BuyersAgent.Flood;
+using Microsoft.AspNetCore.Mvc;
 
 namespace AmmonsDataLabs.BuyersAgent.Screening.Api.Endpoints;
 
@@ -21,6 +22,24 @@ public static class FloodEndpoints
                 return Results.Ok(result);
             })
             .WithName("FloodLookup")
+            .WithOpenApi();
+
+        app.MapGet("/v1/screening/flood/summary", async (
+                [FromQuery] string? address,
+                IFloodDataProvider floodProvider,
+                CancellationToken ct) =>
+            {
+                if (string.IsNullOrWhiteSpace(address))
+                    return Results.ValidationProblem(new Dictionary<string, string[]>
+                    {
+                        ["address"] = ["The address query parameter is required."]
+                    });
+
+                var result = await floodProvider.LookupAsync(address, ct);
+                var summary = FloodSummaryMapper.FromResult(result);
+                return Results.Ok(summary);
+            })
+            .WithName("FloodSummary")
             .WithOpenApi();
 
         return app;
