@@ -17,6 +17,8 @@ static int ShowHelp()
 {
     Console.WriteLine("AmmonsDataLabs.BuyersAgent.Flood.DataPrep");
     Console.WriteLine();
+    Console.WriteLine("Converts BCC flood data into NDJSON format for the screening API.");
+    Console.WriteLine();
     Console.WriteLine("Commands:");
     Console.WriteLine("  zones      Convert flood zone GeoJSON/Shapefile to NDJSON");
     Console.WriteLine("  metrics    Convert parcel metrics Parquet to NDJSON");
@@ -27,10 +29,32 @@ static int ShowHelp()
     Console.WriteLine("  dotnet run -- metrics <parquet_path> <output_dir>");
     Console.WriteLine("  dotnet run -- addresses <parcel_geojson_path> <output_ndjson_path>");
     Console.WriteLine();
-    Console.WriteLine("Examples:");
-    Console.WriteLine("  dotnet run -- zones flood-risk.geojson flood-risk.ndjson --type risk");
-    Console.WriteLine("  dotnet run -- metrics parcel-metrics.parquet ./output");
-    Console.WriteLine("  dotnet run -- addresses property-boundaries-parcel.geojson addresses.ndjson");
+    Console.WriteLine("Full BCC workflow (from raw/ to processed/):");
+    Console.WriteLine();
+    Console.WriteLine("  # 1. Process flood risk zones (for GIS-based lookup)");
+    Console.WriteLine("  dotnet run -- zones raw/flood-awareness-flood-risk-overall.geojson \\");
+    Console.WriteLine("                       processed/flood-risk.ndjson --type risk");
+    Console.WriteLine();
+    Console.WriteLine("  # 2. Process flood extents (optional, for coverage analysis)");
+    Console.WriteLine("  dotnet run -- zones raw/flood-awareness-extents.geojson \\");
+    Console.WriteLine("                       processed/flood-extents.ndjson --type extents");
+    Console.WriteLine();
+    Console.WriteLine("  # 3. Process parcel metrics (for Tier 1 parcel/plan lookup)");
+    Console.WriteLine("  dotnet run -- metrics raw/flood-awareness-property-parcel-metrics.parquet \\");
+    Console.WriteLine("                        processed/");
+    Console.WriteLine("    -> Creates: parcel-metrics.ndjson, plan-metrics.ndjson");
+    Console.WriteLine();
+    Console.WriteLine("  # 4. Process addresses (for geocoding/address lookup)");
+    Console.WriteLine("  dotnet run -- addresses raw/property-boundaries-parcel.geojson \\");
+    Console.WriteLine("                          processed/addresses.ndjson");
+    Console.WriteLine();
+    Console.WriteLine("Expected output structure:");
+    Console.WriteLine("  data/flood/bcc/");
+    Console.WriteLine("    flood-risk.ndjson       <- FloodData:OverallRiskFile");
+    Console.WriteLine("    flood-extents.ndjson    <- FloodData:ExtentsFile");
+    Console.WriteLine("    parcel-metrics.ndjson   <- FloodData:BccParcelMetricsParcelFile");
+    Console.WriteLine("    plan-metrics.ndjson     <- FloodData:BccParcelMetricsPlanFile");
+    Console.WriteLine("    addresses.ndjson        <- FileGeocoding:FilePath");
     return 1;
 }
 
