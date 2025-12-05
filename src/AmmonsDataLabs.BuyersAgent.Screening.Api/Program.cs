@@ -48,6 +48,10 @@ app.UseProblemDetailsExceptionHandler(app.Environment);
 
 app.UseStatusCodePages();
 
+// Serve static files from wwwroot (for web playground)
+app.UseDefaultFiles();
+app.UseStaticFiles();
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
