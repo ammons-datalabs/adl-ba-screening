@@ -23,6 +23,8 @@ public class StubFloodDataProvider : IFloodDataProvider
             {
                 Address = address,
                 Risk = FloodRisk.High,
+                Source = FloodDataSource.BccParcelMetrics,
+                Scope = FloodDataScope.Parcel,
                 Reasons = ["Stub: High flood risk zone."]
             };
 
@@ -31,6 +33,8 @@ public class StubFloodDataProvider : IFloodDataProvider
             {
                 Address = address,
                 Risk = FloodRisk.Low,
+                Source = FloodDataSource.BccParcelMetrics,
+                Scope = FloodDataScope.Parcel,
                 Reasons = ["Stub: Low flood risk zone."]
             };
 
@@ -38,6 +42,8 @@ public class StubFloodDataProvider : IFloodDataProvider
         {
             Address = address,
             Risk = FloodRisk.Unknown,
+            Source = FloodDataSource.Unknown,
+            Scope = FloodDataScope.Unknown,
             Reasons = ["Stub: Unknown flood risk zone."]
         };
     }

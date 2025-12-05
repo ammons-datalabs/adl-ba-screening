@@ -175,4 +175,70 @@ public class FloodEndpointTests(CustomWebApplicationFactory factory) : IClassFix
         Assert.NotNull(problem);
         Assert.True(problem.Errors.ContainsKey("properties"));
     }
+
+    [Fact]
+    public async Task FloodSummary_ValidAddress_ReturnsSummary()
+    {
+        // Act
+        var response = await _client.GetAsync($"/v1/screening/flood/summary?address={Uri.EscapeDataString(StreetAddress)}");
+
+        // Assert
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        var summary = await response.Content.ReadFromJsonAsync<FloodSummary>(_jsonOptions);
+        Assert.NotNull(summary);
+        Assert.Equal(StreetAddress, summary.Address);
+        Assert.Equal("Low", summary.OverallRisk);
+        Assert.True(summary.HasFloodInfo);
+    }
+
+    [Fact]
+    public async Task FloodSummary_HighRiskAddress_ReturnsHighRisk()
+    {
+        // Act
+        var response = await _client.GetAsync($"/v1/screening/flood/summary?address={Uri.EscapeDataString(MainRoadAddress)}");
+
+        // Assert
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        var summary = await response.Content.ReadFromJsonAsync<FloodSummary>(_jsonOptions);
+        Assert.NotNull(summary);
+        Assert.Equal("High", summary.OverallRisk);
+        Assert.True(summary.HasFloodInfo);
+    }
+
+    [Fact]
+    public async Task FloodSummary_UnknownAddress_ReturnsUnknownWithNoFloodInfo()
+    {
+        // Act
+        var response = await _client.GetAsync($"/v1/screening/flood/summary?address={Uri.EscapeDataString(UnknownAddress)}");
+
+        // Assert
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        var summary = await response.Content.ReadFromJsonAsync<FloodSummary>(_jsonOptions);
+        Assert.NotNull(summary);
+        Assert.Equal("Unknown", summary.OverallRisk);
+        Assert.False(summary.HasFloodInfo);
+    }
+
+    [Fact]
+    public async Task FloodSummary_MissingAddress_ReturnsBadRequest()
+    {
+        // Act
+        var response = await _client.GetAsync("/v1/screening/flood/summary");
+
+        // Assert
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task FloodSummary_EmptyAddress_ReturnsBadRequest()
+    {
+        // Act
+        var response = await _client.GetAsync("/v1/screening/flood/summary?address=");
+
+        // Assert
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
 }
