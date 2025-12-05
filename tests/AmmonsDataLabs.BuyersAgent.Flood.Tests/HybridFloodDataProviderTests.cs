@@ -241,6 +241,117 @@ public class HybridFloodDataProviderTests
         Assert.Contains("No flood zone found", string.Join(" ", result.Reasons));
     }
 
+    [Fact]
+    public async Task Lookup_SetsHasAnyExtentIntersection_WhenTier1HasFloodInfo()
+    {
+        var geocoder = new StubGeocoder("118 Fernberg Rd, Paddington", "20SP191298");
+        var metricsIndex = new StubMetricsIndex(
+            "20SP191298",
+            new BccMetricsSnapshot
+            {
+                LotPlanOrPlanKey = "20SP191298",
+                Plan = "SP191298",
+                OverallRisk = FloodRisk.Low,
+                HasFloodInfo = true,
+                Scope = MetricsScope.Parcel,
+                EvidenceMetrics = ["FL_LOW_RIVER"]
+            });
+
+        var provider = new HybridFloodDataProvider(geocoder, metricsIndex, new StubFloodZoneIndex(null));
+
+        var result = await provider.LookupAsync("118 Fernberg Rd, Paddington");
+
+        Assert.Equal(FloodRisk.Low, result.Risk);
+        Assert.True(result.HasAnyExtentIntersection);
+    }
+
+    [Fact]
+    public async Task Lookup_DoesNotSetHasAnyExtentIntersection_WhenTier1NoFloodInfo()
+    {
+        var geocoder = new StubGeocoder("117 Fernberg Rd, Paddington", "1RP84382");
+        var metricsIndex = new StubMetricsIndex(
+            "1RP84382",
+            new BccMetricsSnapshot
+            {
+                LotPlanOrPlanKey = "1RP84382",
+                Plan = "RP84382",
+                OverallRisk = FloodRisk.Unknown,
+                HasFloodInfo = false, // No flood info
+                Scope = MetricsScope.Parcel,
+                EvidenceMetrics = []
+            });
+
+        var provider = new HybridFloodDataProvider(geocoder, metricsIndex, new StubFloodZoneIndex(null));
+
+        var result = await provider.LookupAsync("117 Fernberg Rd, Paddington");
+
+        Assert.Equal(FloodRisk.None, result.Risk);
+        Assert.False(result.HasAnyExtentIntersection);
+    }
+
+    [Fact]
+    public async Task Lookup_SetsHasAnyExtentIntersection_WhenTier3Inside()
+    {
+        // Simulates 5 Bellambi scenario: inside flood extent via point buffer
+        var geocoder = new StubGeocoder("5 Bellambi Place, Westlake", "678RP866225");
+        var metricsIndex = new StubMetricsIndex(); // No metrics for this lotplan
+
+        var polygon = GeoFactory.CreatePolygon(
+            new GeoPoint(-27.55, 152.90),
+            new GeoPoint(-27.55, 152.92),
+            new GeoPoint(-27.54, 152.92),
+            new GeoPoint(-27.54, 152.90));
+
+        var zone = new FloodZone
+        {
+            Id = "zone-unknown",
+            Risk = FloodRisk.Unknown, // Unclassified extent
+            Geometry = polygon
+        };
+
+        var zoneIndex = new StubFloodZoneIndex(zone);
+
+        var provider = new HybridFloodDataProvider(geocoder, metricsIndex, zoneIndex);
+
+        var result = await provider.LookupAsync("5 Bellambi Place, Westlake");
+
+        Assert.Equal(FloodRisk.Unknown, result.Risk);
+        Assert.Equal(FloodDataSource.PointBuffer, result.Source);
+        Assert.True(result.HasAnyExtentIntersection);
+        Assert.Contains("unclassified flood extent", string.Join(" ", result.Reasons), StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task Lookup_DoesNotSetHasAnyExtentIntersection_WhenTier3Near()
+    {
+        // Near a flood zone but not inside - should not set the flag
+        var geocoder = new StubGeocoder("123 Near Zone St", null);
+        var metricsIndex = new StubMetricsIndex();
+
+        var polygon = GeoFactory.CreatePolygon(
+            new GeoPoint(-27.48, 153.00),
+            new GeoPoint(-27.48, 153.05),
+            new GeoPoint(-27.45, 153.05),
+            new GeoPoint(-27.45, 153.00));
+
+        var zone = new FloodZone
+        {
+            Id = "zone-1",
+            Risk = FloodRisk.Low,
+            Geometry = polygon
+        };
+
+        var zoneIndex = new NearFloodZoneIndex(zone, 15.0);
+
+        var provider = new HybridFloodDataProvider(geocoder, metricsIndex, zoneIndex);
+
+        var result = await provider.LookupAsync("123 Near Zone St");
+
+        Assert.Equal(FloodRisk.Low, result.Risk);
+        Assert.Equal(FloodZoneProximity.Near, result.Proximity);
+        Assert.False(result.HasAnyExtentIntersection); // Near, not inside
+    }
+
     // Test stub implementations
     private sealed class StubGeocoder : IGeocodingService
     {
