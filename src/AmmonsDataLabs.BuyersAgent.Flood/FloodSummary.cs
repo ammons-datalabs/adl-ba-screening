@@ -23,7 +23,7 @@ public sealed class FloodSummary
     public bool HasFloodInfo { get; init; }
 
     /// <summary>
-    /// Data source used: BCC_PARCEL_METRICS, POINT_BUFFER, or UNKNOWN.
+    /// Data source used: BCC_PARCEL_METRICS, PARCEL_INTERSECTS_EXTENTS, POINT_BUFFER, or UNKNOWN.
     /// </summary>
     public required string Source { get; init; }
 
