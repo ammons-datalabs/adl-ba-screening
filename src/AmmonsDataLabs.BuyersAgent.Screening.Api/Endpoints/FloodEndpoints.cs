@@ -30,7 +30,10 @@ public static class FloodEndpoints
                 CancellationToken ct) =>
             {
                 if (string.IsNullOrWhiteSpace(address))
-                    return Results.BadRequest("address query parameter is required");
+                    return Results.ValidationProblem(new Dictionary<string, string[]>
+                    {
+                        ["address"] = ["The address query parameter is required."]
+                    });
 
                 var result = await floodProvider.LookupAsync(address, ct);
                 var summary = FloodSummaryMapper.FromResult(result);
