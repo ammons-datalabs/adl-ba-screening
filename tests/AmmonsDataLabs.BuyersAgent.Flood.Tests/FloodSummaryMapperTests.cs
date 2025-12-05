@@ -116,4 +116,67 @@ public class FloodSummaryMapperTests
         Assert.Contains("Risk derived from BCC parcel metrics.", summary.Notes);
         Assert.Contains("FL_MED_RIVER", summary.Notes);
     }
+
+    [Fact]
+    public void FromResult_WithUnknownRiskButExtentIntersection_ReturnsHasFloodInfoTrue()
+    {
+        // Simulates 5 Bellambi Place scenario: inside unclassified flood extent
+        var result = new FloodLookupResult
+        {
+            Address = "5 Bellambi Place, Westlake",
+            Risk = FloodRisk.Unknown,
+            Source = FloodDataSource.PointBuffer,
+            Scope = FloodDataScope.Unknown,
+            HasAnyExtentIntersection = true,
+            Reasons = ["Location falls inside Unknown likelihood flood zone (point buffer).",
+                       "Property is inside an unclassified flood extent. Manual FloodWise check recommended."]
+        };
+
+        var summary = FloodSummaryMapper.FromResult(result);
+
+        Assert.Equal("Unknown", summary.OverallRisk);
+        Assert.Equal("POINT_BUFFER", summary.Source);
+        Assert.True(summary.HasFloodInfo); // Key assertion: HasFloodInfo is true despite Unknown risk
+        Assert.Contains("unclassified flood extent", summary.Notes);
+    }
+
+    [Fact]
+    public void FromResult_WithUnknownRiskAndNoExtentIntersection_ReturnsHasFloodInfoFalse()
+    {
+        // Simulates geocoding failure or no data scenario
+        var result = new FloodLookupResult
+        {
+            Address = "Unknown Address",
+            Risk = FloodRisk.Unknown,
+            Source = FloodDataSource.Unknown,
+            Scope = FloodDataScope.Unknown,
+            HasAnyExtentIntersection = false,
+            Reasons = ["Geocoding failed: NotFound"]
+        };
+
+        var summary = FloodSummaryMapper.FromResult(result);
+
+        Assert.Equal("Unknown", summary.OverallRisk);
+        Assert.False(summary.HasFloodInfo); // No extent intersection = no flood info
+    }
+
+    [Fact]
+    public void FromResult_WithKnownRiskAndExtentIntersection_ReturnsHasFloodInfoTrue()
+    {
+        // Normal case: known risk from parcel metrics
+        var result = new FloodLookupResult
+        {
+            Address = "118 Fernberg Road, Paddington",
+            Risk = FloodRisk.Low,
+            Source = FloodDataSource.BccParcelMetrics,
+            Scope = FloodDataScope.Parcel,
+            HasAnyExtentIntersection = true,
+            Reasons = ["Risk derived from BCC parcel metrics."]
+        };
+
+        var summary = FloodSummaryMapper.FromResult(result);
+
+        Assert.Equal("Low", summary.OverallRisk);
+        Assert.True(summary.HasFloodInfo);
+    }
 }
