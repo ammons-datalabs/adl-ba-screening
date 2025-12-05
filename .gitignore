@@ -61,3 +61,4 @@ local.settings.json
 # Claude Code
 .claude/
 CLAUDE.md
+tests/AmmonsDataLabs.BuyersAgent.Screening.Api.Tests/Resources/FloodWiseReports/
