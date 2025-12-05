@@ -17,4 +17,11 @@ public class FloodLookupResult
     /// The scope of the flood data used for this result.
     /// </summary>
     public FloodDataScope Scope { get; init; } = FloodDataScope.Unknown;
+
+    /// <summary>
+    /// True if the location intersects any flood extent polygon, even if the
+    /// likelihood classification is Unknown. Use this to flag properties that
+    /// are inside mapped flood areas but lack risk classification.
+    /// </summary>
+    public bool HasAnyExtentIntersection { get; init; }
 }

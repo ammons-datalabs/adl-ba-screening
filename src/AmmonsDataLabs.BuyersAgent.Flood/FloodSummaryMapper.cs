@@ -7,11 +7,18 @@ public static class FloodSummaryMapper
 {
     public static FloodSummary FromResult(FloodLookupResult result)
     {
+        // HasFloodInfo is true if:
+        // - We have a known risk from a known source, OR
+        // - The property intersects any flood extent (even if risk is Unknown)
+        var hasFloodInfo =
+            (result.Risk != FloodRisk.Unknown && result.Source != FloodDataSource.Unknown) ||
+            result.HasAnyExtentIntersection;
+
         return new FloodSummary
         {
             Address = result.Address,
             OverallRisk = result.Risk.ToString(),
-            HasFloodInfo = result.Risk != FloodRisk.Unknown && result.Source != FloodDataSource.Unknown,
+            HasFloodInfo = hasFloodInfo,
             Source = FormatSource(result.Source),
             Scope = result.Scope.ToString(),
             Notes = result.Reasons.Length > 0 ? string.Join(" ", result.Reasons) : null

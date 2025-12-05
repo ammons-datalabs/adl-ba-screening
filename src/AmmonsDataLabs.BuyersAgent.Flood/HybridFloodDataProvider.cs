@@ -105,7 +105,8 @@ public sealed class HybridFloodDataProvider(
                 DistanceMetres = null,
                 Reasons = reasons.ToArray(),
                 Source = FloodDataSource.BccParcelMetrics,
-                Scope = scope
+                Scope = scope,
+                HasAnyExtentIntersection = true
             };
         }
 
@@ -139,9 +140,17 @@ public sealed class HybridFloodDataProvider(
                 Scope = FloodDataScope.Unknown
             };
 
-        var reason = hit.Proximity == FloodZoneProximity.Inside
+        var isInside = hit.Proximity == FloodZoneProximity.Inside;
+
+        var reason = isInside
             ? $"Location falls inside {hit.Zone.Risk} likelihood flood zone (point buffer)."
             : $"Location is {hit.DistanceMetres:F1}m from {hit.Zone.Risk} likelihood flood zone (point buffer).";
+
+        var reasons = new List<string> { reason };
+
+        // Add guidance for Unknown risk inside an extent
+        if (isInside && hit.Zone.Risk == FloodRisk.Unknown)
+            reasons.Add("Property is inside an unclassified flood extent. Manual FloodWise check recommended.");
 
         return new FloodLookupResult
         {
@@ -149,9 +158,10 @@ public sealed class HybridFloodDataProvider(
             Risk = hit.Zone.Risk,
             Proximity = hit.Proximity,
             DistanceMetres = hit.DistanceMetres > 0 ? hit.DistanceMetres : null,
-            Reasons = [reason],
+            Reasons = reasons.ToArray(),
             Source = FloodDataSource.PointBuffer,
-            Scope = FloodDataScope.Unknown
+            Scope = FloodDataScope.Unknown,
+            HasAnyExtentIntersection = isInside
         };
     }
 }
