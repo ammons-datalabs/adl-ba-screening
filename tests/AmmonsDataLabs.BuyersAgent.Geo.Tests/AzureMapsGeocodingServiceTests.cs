@@ -34,8 +34,8 @@ public class AzureMapsGeocodingServiceTests
 
         Assert.Equal(GeocodingStatus.Success, result.Status);
         Assert.NotNull(result.Location);
-        Assert.Equal(-27.4710, result.Location.Value.Latitude, precision: 4);
-        Assert.Equal(153.0234, result.Location.Value.Longitude, precision: 4);
+        Assert.Equal(-27.4710, result.Location.Value.Latitude, 4);
+        Assert.Equal(153.0234, result.Location.Value.Longitude, 4);
         Assert.Equal("1 William St, Brisbane City QLD 4000", result.NormalizedAddress);
         Assert.Equal("AzureMaps", result.Provider);
     }
@@ -128,8 +128,8 @@ public class AzureMapsGeocodingServiceTests
 
         var service = CreateServiceWithResponse(HttpStatusCode.OK, new AzureMapsSearchResponse { Results = [] });
 
-        await Assert.ThrowsAsync<OperationCanceledException>(
-            () => service.GeocodeAsync("1 William St, Brisbane QLD", cts.Token));
+        await Assert.ThrowsAsync<OperationCanceledException>(() =>
+            service.GeocodeAsync("1 William St, Brisbane QLD", cts.Token));
     }
 
     [Fact]
@@ -158,7 +158,7 @@ public class AzureMapsGeocodingServiceTests
 
         Assert.Equal(GeocodingStatus.Success, result.Status);
         Assert.NotNull(result.Location);
-        Assert.Equal(-27.4710, result.Location.Value.Latitude, precision: 4);
+        Assert.Equal(-27.4710, result.Location.Value.Latitude, 4);
         Assert.Equal("First Result", result.NormalizedAddress);
     }
 

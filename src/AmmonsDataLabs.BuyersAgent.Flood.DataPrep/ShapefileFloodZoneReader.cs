@@ -24,9 +24,7 @@ public static class ShapefileFloodZoneReader
 
             var attributes = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
             for (var i = 0; i < fieldNames.Length; i++)
-            {
                 attributes[fieldNames[i]] = reader.GetValue(i + 1); // index 0 is geometry
-            }
 
             var (id, risk) = mapper(attributes);
 

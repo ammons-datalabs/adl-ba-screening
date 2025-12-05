@@ -1,10 +1,7 @@
 using AmmonsDataLabs.BuyersAgent.Flood;
 using AmmonsDataLabs.BuyersAgent.Flood.DataPrep;
 
-if (args.Length < 1)
-{
-    return ShowHelp();
-}
+if (args.Length < 1) return ShowHelp();
 
 var command = args[0].ToLowerInvariant();
 
@@ -64,7 +61,6 @@ static int RunZonesCommand(string[] args)
     IEnumerable<FloodZone> zones;
 
     if (isGeoJson)
-    {
         zones = datasetType == "extents"
             ? GeoJsonFloodZoneReader.Read(inputPath, attributes =>
             {
@@ -79,9 +75,7 @@ static int RunZonesCommand(string[] args)
                 var risk = FloodLikelihoodMapper.Map(floodRisk);
                 return (id, risk);
             });
-    }
     else
-    {
         zones = ShapefileFloodZoneReader.Read(inputPath, attributes =>
         {
             var id = attributes.TryGetValue("OBJECTID", out var objId) ? objId?.ToString() ?? "unknown" : "unknown";
@@ -89,17 +83,13 @@ static int RunZonesCommand(string[] args)
             var risk = FloodLikelihoodMapper.Map(likelihood);
             return (id, risk);
         });
-    }
 
     var zoneList = zones.ToList();
     Console.WriteLine($"Found {zoneList.Count} flood zones");
 
     // Show risk distribution
     var riskCounts = zoneList.GroupBy(z => z.Risk).OrderBy(g => g.Key);
-    foreach (var group in riskCounts)
-    {
-        Console.WriteLine($"  {group.Key}: {group.Count()}");
-    }
+    foreach (var group in riskCounts) Console.WriteLine($"  {group.Key}: {group.Count()}");
 
     Console.WriteLine($"Writing NDJSON: {outputPath}");
 

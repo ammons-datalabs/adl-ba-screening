@@ -1,5 +1,4 @@
 using AmmonsDataLabs.BuyersAgent.Flood.DataPrep.Tests.Helpers;
-using Xunit;
 
 namespace AmmonsDataLabs.BuyersAgent.Flood.DataPrep.Tests;
 
@@ -15,10 +14,7 @@ public class ParcelAddressDataPrepTests : IDisposable
 
     public void Dispose()
     {
-        if (Directory.Exists(_tempDir))
-        {
-            Directory.Delete(_tempDir, recursive: true);
-        }
+        if (Directory.Exists(_tempDir)) Directory.Delete(_tempDir, true);
         GC.SuppressFinalize(this);
     }
 
@@ -80,7 +76,7 @@ public class ParcelAddressDataPrepTests : IDisposable
         Assert.NotNull(record.Latitude);
         Assert.NotNull(record.Longitude);
         // Centroid should be close to the specified coordinates (within the small polygon offset)
-        Assert.True(Math.Abs(record.Latitude!.Value - (-27.4705)) < 0.001);
+        Assert.True(Math.Abs(record.Latitude!.Value - -27.4705) < 0.001);
         Assert.True(Math.Abs(record.Longitude!.Value - 153.0260) < 0.001);
     }
 

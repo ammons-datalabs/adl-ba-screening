@@ -14,7 +14,6 @@ public static class EmbeddedResourceHelper
         var available = string.Join(", ", assembly.GetManifestResourceNames());
         throw new InvalidOperationException(
             $"Resource '{fullResourceName}' not found. Available resources: {available}");
-
     }
 
     public static string ExtractToTempFile(string resourceName, string tempDir)

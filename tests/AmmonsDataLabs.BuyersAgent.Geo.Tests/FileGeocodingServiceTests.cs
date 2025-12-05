@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Microsoft.Extensions.Options;
 
 namespace AmmonsDataLabs.BuyersAgent.Geo.Tests;
@@ -14,10 +15,7 @@ public class FileGeocodingServiceTests : IDisposable
 
     public void Dispose()
     {
-        if (Directory.Exists(_tempDir))
-        {
-            Directory.Delete(_tempDir, recursive: true);
-        }
+        if (Directory.Exists(_tempDir)) Directory.Delete(_tempDir, true);
         GC.SuppressFinalize(this);
     }
 
@@ -100,8 +98,8 @@ public class FileGeocodingServiceTests : IDisposable
         Assert.Equal(GeocodingStatus.Success, result.Status);
         Assert.Equal("3GTP102995", result.LotPlan);
         Assert.NotNull(result.Location);
-        Assert.Equal(-27.549067, result.Location!.Value.Latitude, precision: 6);
-        Assert.Equal(152.911153, result.Location!.Value.Longitude, precision: 6);
+        Assert.Equal(-27.549067, result.Location!.Value.Latitude, 6);
+        Assert.Equal(152.911153, result.Location!.Value.Longitude, 6);
         Assert.Equal("FileGeocoding", result.Provider);
     }
 
@@ -211,30 +209,19 @@ public class FileGeocodingServiceTests : IDisposable
         Assert.Equal("20SP191298", result118.LotPlan);
     }
 
-    private static ParcelEntry CreateFernberg117Entry() => new()
+    private static ParcelEntry CreateFernberg117Entry()
     {
-        LotPlan = "1RP84382",
-        HouseNumber = "117",
-        CorridorName = "FERNBERG",
-        CorridorSuffixCode = "RD",
-        Suburb = "PADDINGTON",
-        Latitude = -27.459876,
-        Longitude = 152.992834,
-        NormalizedAddress = "117 Fernberg Road, Paddington"
-    };
-
-    private record ParcelEntry
-    {
-        public string? LotPlan { get; init; }
-        public string? UnitNumber { get; init; }
-        public string? HouseNumber { get; init; }
-        public string? HouseNumberSuffix { get; init; }
-        public string? CorridorName { get; init; }
-        public string? CorridorSuffixCode { get; init; }
-        public string? Suburb { get; init; }
-        public double? Latitude { get; init; }
-        public double? Longitude { get; init; }
-        public string? NormalizedAddress { get; init; }
+        return new ParcelEntry
+        {
+            LotPlan = "1RP84382",
+            HouseNumber = "117",
+            CorridorName = "FERNBERG",
+            CorridorSuffixCode = "RD",
+            Suburb = "PADDINGTON",
+            Latitude = -27.459876,
+            Longitude = 152.992834,
+            NormalizedAddress = "117 Fernberg Road, Paddington"
+        };
     }
 
     private string CreateEmptyNdjsonFile()
@@ -250,7 +237,7 @@ public class FileGeocodingServiceTests : IDisposable
         using var writer = File.CreateText(filePath);
         foreach (var entry in entries)
         {
-            var json = System.Text.Json.JsonSerializer.Serialize(new
+            var json = JsonSerializer.Serialize(new
             {
                 lot_plan = entry.LotPlan,
                 unit_number = entry.UnitNumber,
@@ -265,6 +252,21 @@ public class FileGeocodingServiceTests : IDisposable
             });
             writer.WriteLine(json);
         }
+
         return filePath;
+    }
+
+    private record ParcelEntry
+    {
+        public string? LotPlan { get; init; }
+        public string? UnitNumber { get; init; }
+        public string? HouseNumber { get; init; }
+        public string? HouseNumberSuffix { get; init; }
+        public string? CorridorName { get; init; }
+        public string? CorridorSuffixCode { get; init; }
+        public string? Suburb { get; init; }
+        public double? Latitude { get; init; }
+        public double? Longitude { get; init; }
+        public string? NormalizedAddress { get; init; }
     }
 }

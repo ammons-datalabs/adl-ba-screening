@@ -39,7 +39,8 @@ public static class SyntheticShapefileGenerator
         shapefileWriter.Write(features);
     }
 
-    private static Feature CreateFeature(GeometryFactory factory, int objectId, string likelihood, params Coordinate[] coords)
+    private static Feature CreateFeature(GeometryFactory factory, int objectId, string likelihood,
+        params Coordinate[] coords)
     {
         var ring = coords.ToList();
         ring.Add(ring[0]); // Close the ring

@@ -1,15 +1,12 @@
-using AmmonsDataLabs.BuyersAgent.Flood;
-using AmmonsDataLabs.BuyersAgent.Flood.DataPrep;
 using AmmonsDataLabs.BuyersAgent.Flood.DataPrep.Tests.Helpers;
 using NetTopologySuite.Geometries;
-using Xunit;
 
 namespace AmmonsDataLabs.BuyersAgent.Flood.DataPrep.Tests;
 
 public class ShapefileFloodZoneReaderTests : IDisposable
 {
-    private readonly string _tempDir;
     private readonly string _shpPath;
+    private readonly string _tempDir;
 
     public ShapefileFloodZoneReaderTests()
     {
@@ -22,10 +19,7 @@ public class ShapefileFloodZoneReaderTests : IDisposable
 
     public void Dispose()
     {
-        if (Directory.Exists(_tempDir))
-        {
-            Directory.Delete(_tempDir, recursive: true);
-        }
+        if (Directory.Exists(_tempDir)) Directory.Delete(_tempDir, true);
         GC.SuppressFinalize(this);
     }
 

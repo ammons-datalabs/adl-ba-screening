@@ -12,7 +12,7 @@ public static class BccParcelMetricsNdjsonWriter
     {
         PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
         WriteIndented = false,
-        DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
     };
 
     /// <summary>
@@ -60,8 +60,10 @@ public static class BccParcelMetricsNdjsonWriter
         public decimal? OnePercentAepRiver { get; init; }
         public decimal? PointTwoPercentAepRiver { get; init; }
         public decimal? DefinedFloodLevel { get; init; }
+
         [JsonPropertyName("historic_flood_level_1")]
         public decimal? HistoricFloodLevel1 { get; init; }
+
         public required string[] EvidenceMetrics { get; init; }
     }
 }

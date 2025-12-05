@@ -1,6 +1,3 @@
-using AmmonsDataLabs.BuyersAgent.Flood.DataPrep;
-using Xunit;
-
 namespace AmmonsDataLabs.BuyersAgent.Flood.DataPrep.Tests;
 
 public class LotPlanPartsTests
@@ -31,8 +28,8 @@ public class LotPlanPartsTests
     }
 
     [Theory]
-    [InlineData("GTP102995")]   // No lot number prefix
-    [InlineData("123")]         // No plan suffix
+    [InlineData("GTP102995")] // No lot number prefix
+    [InlineData("123")] // No plan suffix
     public void Parse_ThrowsOnInvalidFormat(string lotplan)
     {
         Assert.Throws<FormatException>(() => LotPlanParts.Parse(lotplan));

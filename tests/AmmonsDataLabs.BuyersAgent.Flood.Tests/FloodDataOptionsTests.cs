@@ -1,5 +1,4 @@
 using AmmonsDataLabs.BuyersAgent.Flood.Configuration;
-using Xunit;
 
 namespace AmmonsDataLabs.BuyersAgent.Flood.Tests;
 

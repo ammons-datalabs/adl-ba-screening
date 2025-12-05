@@ -1,4 +1,3 @@
-using AmmonsDataLabs.BuyersAgent.Flood;
 using AmmonsDataLabs.BuyersAgent.Geo;
 
 namespace AmmonsDataLabs.BuyersAgent.Flood.Tests;
@@ -85,7 +84,7 @@ public class FloodZoneIndexTests
         var index = new InMemoryFloodZoneIndex([zone]);
         var pointInside = new GeoPoint(-27.46, 153.02);
 
-        var result = index.FindNearestZone(pointInside, maxDistanceMetres: 30);
+        var result = index.FindNearestZone(pointInside, 30);
 
         Assert.NotNull(result);
         Assert.Equal(FloodZoneProximity.Inside, result!.Proximity);
@@ -100,7 +99,7 @@ public class FloodZoneIndexTests
         var index = new InMemoryFloodZoneIndex([zone]);
         var pointJustOutside = new GeoPoint(-27.481, 153.02);
 
-        var result = index.FindNearestZone(pointJustOutside, maxDistanceMetres: 200);
+        var result = index.FindNearestZone(pointJustOutside, 200);
 
         Assert.NotNull(result);
         Assert.Equal(FloodZoneProximity.Near, result!.Proximity);
@@ -116,7 +115,7 @@ public class FloodZoneIndexTests
         var index = new InMemoryFloodZoneIndex([zone]);
         var pointFarAway = new GeoPoint(-27.60, 153.20);
 
-        var result = index.FindNearestZone(pointFarAway, maxDistanceMetres: 30);
+        var result = index.FindNearestZone(pointFarAway, 30);
 
         Assert.Null(result);
     }
@@ -129,7 +128,7 @@ public class FloodZoneIndexTests
         var index = new InMemoryFloodZoneIndex([low, high]);
         var pointInside = new GeoPoint(-27.46, 153.02);
 
-        var result = index.FindNearestZone(pointInside, maxDistanceMetres: 30);
+        var result = index.FindNearestZone(pointInside, 30);
 
         Assert.NotNull(result);
         Assert.Equal(FloodRisk.High, result!.Zone.Risk);

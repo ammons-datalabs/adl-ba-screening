@@ -6,7 +6,7 @@ using AmmonsDataLabs.BuyersAgent.Geo;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
-using Xunit;
+using Microsoft.Extensions.Options;
 
 namespace AmmonsDataLabs.BuyersAgent.Screening.Api.Tests;
 
@@ -16,9 +16,6 @@ namespace AmmonsDataLabs.BuyersAgent.Screening.Api.Tests;
 /// </summary>
 public class GoldenAddressIntegrationTests : IDisposable
 {
-    private readonly string _tempDir;
-    private readonly string _geocodingFilePath;
-
     // Golden addresses mapped to centroids from sample-flood-risk.ndjson
     private static readonly GoldenAddress[] GoldenAddresses =
     [
@@ -32,10 +29,11 @@ public class GoldenAddressIntegrationTests : IDisposable
 
         // High Risk zones
         new("1 High Risk Ave, Brisbane QLD", -27.362153, 152.984494, "High"),
-        new("2 High Risk Ave, Brisbane QLD", -27.407568, 152.994589, "High"),
+        new("2 High Risk Ave, Brisbane QLD", -27.407568, 152.994589, "High")
     ];
 
-    private record GoldenAddress(string Address, double Lat, double Lon, string ExpectedRisk);
+    private readonly string _geocodingFilePath;
+    private readonly string _tempDir;
 
     public GoldenAddressIntegrationTests()
     {
@@ -62,6 +60,12 @@ public class GoldenAddressIntegrationTests : IDisposable
             });
             writer.WriteLine(json);
         }
+    }
+
+    public void Dispose()
+    {
+        if (Directory.Exists(_tempDir)) Directory.Delete(_tempDir, true);
+        GC.SuppressFinalize(this);
     }
 
     private static (string house, string street, string suffix, string suburb) ParseGoldenAddress(string address)
@@ -95,15 +99,6 @@ public class GoldenAddressIntegrationTests : IDisposable
         };
     }
 
-    public void Dispose()
-    {
-        if (Directory.Exists(_tempDir))
-        {
-            Directory.Delete(_tempDir, recursive: true);
-        }
-        GC.SuppressFinalize(this);
-    }
-
     private WebApplicationFactory<Program> CreateFactory()
     {
         // The sample NDJSON is located in the DataPrep.Tests/Resources folder
@@ -130,15 +125,12 @@ public class GoldenAddressIntegrationTests : IDisposable
                             d.ServiceType == typeof(IBccParcelMetricsIndex))
                         .ToList();
 
-                    foreach (var descriptor in descriptorsToRemove)
-                    {
-                        services.Remove(descriptor);
-                    }
+                    foreach (var descriptor in descriptorsToRemove) services.Remove(descriptor);
 
                     // Use FileGeocodingService with golden addresses
                     services.AddSingleton<IGeocodingService>(_ =>
                     {
-                        var options = Microsoft.Extensions.Options.Options.Create(
+                        var options = Options.Create(
                             new FileGeocodingOptions { FilePath = geocodingPath });
                         return new FileGeocodingService(options);
                     });
@@ -148,7 +140,7 @@ public class GoldenAddressIntegrationTests : IDisposable
                     services.AddSingleton<IFloodZoneIndex>(sp =>
                     {
                         var loader = sp.GetRequiredService<IFloodZoneDataLoader>();
-                        var options = Microsoft.Extensions.Options.Options.Create(
+                        var options = Options.Create(
                             new FloodDataOptions
                             {
                                 DataRoot = resourcesPath,
@@ -265,4 +257,6 @@ public class GoldenAddressIntegrationTests : IDisposable
         Assert.Contains("Medium", content);
         Assert.Contains("High", content);
     }
+
+    private record GoldenAddress(string Address, double Lat, double Lon, string ExpectedRisk);
 }

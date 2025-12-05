@@ -1,35 +1,7 @@
-using AmmonsDataLabs.BuyersAgent.Geo;
-
 namespace AmmonsDataLabs.BuyersAgent.Geo.Tests;
 
 public class StubGeocodingServiceTests
 {
-    // Test-only stub nested class
-    private sealed class StubGeocodingService : IGeocodingService
-    {
-        public Task<GeocodingResult> GeocodeAsync(string address, CancellationToken cancellationToken = default)
-        {
-            if (string.Equals(address, "1 Test St, Brisbane QLD", StringComparison.OrdinalIgnoreCase))
-            {
-                return Task.FromResult(new GeocodingResult
-                {
-                    Query = address,
-                    NormalizedAddress = "1 Test Street, Brisbane QLD 4000",
-                    Location = new GeoPoint(-27.4705, 153.0260),
-                    Status = GeocodingStatus.Success,
-                    Provider = nameof(StubGeocodingService)
-                });
-            }
-
-            return Task.FromResult(new GeocodingResult
-            {
-                Query = address,
-                Status = GeocodingStatus.NotFound,
-                Provider = nameof(StubGeocodingService)
-            });
-        }
-    }
-
     private readonly StubGeocodingService _sut = new();
 
     [Fact]
@@ -48,5 +20,29 @@ public class StubGeocodingServiceTests
 
         Assert.Equal(GeocodingStatus.NotFound, result.Status);
         Assert.Null(result.Location);
+    }
+
+    // Test-only stub nested class
+    private sealed class StubGeocodingService : IGeocodingService
+    {
+        public Task<GeocodingResult> GeocodeAsync(string address, CancellationToken cancellationToken = default)
+        {
+            if (string.Equals(address, "1 Test St, Brisbane QLD", StringComparison.OrdinalIgnoreCase))
+                return Task.FromResult(new GeocodingResult
+                {
+                    Query = address,
+                    NormalizedAddress = "1 Test Street, Brisbane QLD 4000",
+                    Location = new GeoPoint(-27.4705, 153.0260),
+                    Status = GeocodingStatus.Success,
+                    Provider = nameof(StubGeocodingService)
+                });
+
+            return Task.FromResult(new GeocodingResult
+            {
+                Query = address,
+                Status = GeocodingStatus.NotFound,
+                Provider = nameof(StubGeocodingService)
+            });
+        }
     }
 }

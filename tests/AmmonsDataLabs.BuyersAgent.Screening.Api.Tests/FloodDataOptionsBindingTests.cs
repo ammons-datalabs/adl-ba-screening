@@ -2,7 +2,6 @@ using AmmonsDataLabs.BuyersAgent.Flood.Configuration;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
-using Xunit;
 
 namespace AmmonsDataLabs.BuyersAgent.Screening.Api.Tests;
 
@@ -15,7 +14,7 @@ public class FloodDataOptionsBindingTests
         {
             ["FloodData:DataRoot"] = "../local-flood-data",
             ["FloodData:ExtentsFile"] = "custom-extents.ndjson",
-            ["FloodData:OverallRiskFile"] = "custom-overall.ndjson",
+            ["FloodData:OverallRiskFile"] = "custom-overall.ndjson"
         };
 
         var config = new ConfigurationBuilder()

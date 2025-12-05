@@ -1,5 +1,3 @@
-using AmmonsDataLabs.BuyersAgent.Geo;
-
 namespace AmmonsDataLabs.BuyersAgent.Geo.Tests;
 
 public class GeocodingResultTests
