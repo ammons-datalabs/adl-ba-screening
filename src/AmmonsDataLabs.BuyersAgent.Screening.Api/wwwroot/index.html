@@ -481,9 +481,9 @@
             tbody.innerHTML = results.map((r, idx) => `
                 <tr>
                     <td>${escapeHtml(r.address)}</td>
-                    <td><span class="risk-${r.overallRisk.toLowerCase()}">${escapeHtml(r.riskLabel)}</span></td>
-                    <td>${r.source || '-'}</td>
-                    <td>${r.scope || '-'}</td>
+                    <td><span class="risk-${(r.overallRisk || 'unknown').toLowerCase()}">${escapeHtml(r.riskLabel)}</span></td>
+                    <td>${escapeHtml(r.source || '-')}</td>
+                    <td>${escapeHtml(r.scope || '-')}</td>
                     <td class="reasons">${escapeHtml(r.notes || '')}</td>
                     <td><button class="flag-btn" onclick="openAnomalyForm(${idx})">Flag</button></td>
                 </tr>
