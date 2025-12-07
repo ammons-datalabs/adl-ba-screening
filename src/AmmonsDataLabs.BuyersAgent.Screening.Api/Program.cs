@@ -41,6 +41,7 @@ else
 }
 
 builder.Services.AddScoped<IFloodScreeningService, FloodScreeningService>();
+builder.Services.AddSingleton<IFloodAnomalyStore, FileFloodAnomalyStore>();
 
 var app = builder.Build();
 
@@ -65,6 +66,7 @@ app.MapGet("/health", () => Results.Text("OK"))
     .WithOpenApi();
 
 app.MapFloodEndpoints();
+app.MapAnomalyEndpoints();
 
 app.Run();
 

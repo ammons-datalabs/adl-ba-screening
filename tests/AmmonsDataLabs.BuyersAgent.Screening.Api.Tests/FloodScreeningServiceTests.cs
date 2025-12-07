@@ -27,7 +27,7 @@ public class FloodScreeningServiceTests
         Assert.Equal(2, response.Results.Count);
         Assert.Equal("Address 1", response.Results[0].Address);
         Assert.Equal("Address 2", response.Results[1].Address);
-        Assert.All(response.Results, r => Assert.Equal(FloodRisk.High, r.Risk));
+        Assert.All(response.Results, r => Assert.Equal("High", r.OverallRisk));
     }
 
     [Fact]
@@ -57,6 +57,8 @@ public class FloodScreeningServiceTests
             {
                 Address = address,
                 Risk = risk,
+                Source = FloodDataSource.BccParcelMetrics,
+                Scope = FloodDataScope.Parcel,
                 Reasons = [reason]
             });
         }
