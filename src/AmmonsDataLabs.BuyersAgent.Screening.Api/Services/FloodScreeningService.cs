@@ -11,12 +11,13 @@ public sealed class FloodScreeningService(IFloodDataProvider dataProvider) : IFl
     public async Task<FloodLookupResponse> ScreenAsync(
         FloodLookupRequest request, CancellationToken cancellationToken)
     {
-        var results = new List<FloodLookupResult>();
+        var results = new List<FloodSummary>();
 
         foreach (var property in request.Properties)
         {
             var result = await dataProvider.LookupAsync(property.Address, cancellationToken);
-            results.Add(result);
+            var summary = FloodSummaryMapper.FromResult(result);
+            results.Add(summary);
         }
 
         return new FloodLookupResponse { Results = results };

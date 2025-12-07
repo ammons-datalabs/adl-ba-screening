@@ -13,8 +13,15 @@ public sealed class FloodSummary
 
     /// <summary>
     /// Overall flood risk: None, Low, Medium, High, or Unknown.
+    /// Used for sorting and CSS styling.
     /// </summary>
     public required string OverallRisk { get; init; }
+
+    /// <summary>
+    /// Human-friendly display label for the risk.
+    /// Provides actionable guidance for cases like unclassified flood extents.
+    /// </summary>
+    public required string RiskLabel { get; init; }
 
     /// <summary>
     /// True if we found flood data for this location.
