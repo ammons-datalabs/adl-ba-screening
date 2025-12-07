@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flood Anomalies</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            color: #666;
+            margin-bottom: 20px;
+        }
+        .toolbar {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 14px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        #refreshBtn {
+            background: #0066cc;
+            color: white;
+        }
+        #refreshBtn:hover {
+            background: #0052a3;
+        }
+        #clearBtn {
+            background: #c62828;
+            color: white;
+        }
+        #clearBtn:hover {
+            background: #a31c1c;
+        }
+        #clearBtn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .delete-btn {
+            padding: 4px 8px;
+            font-size: 12px;
+            background: #ffebee;
+            color: #c62828;
+            border: 1px solid #c62828;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .delete-btn:hover {
+            background: #ffcdd2;
+        }
+        .delete-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .status {
+            color: #666;
+            font-size: 14px;
+        }
+        .results-section {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        th {
+            background: #f8f8f8;
+            font-weight: 600;
+            color: #333;
+            position: sticky;
+            top: 0;
+        }
+        tr:hover {
+            background: #fafafa;
+        }
+        .risk-high {
+            background: #ffebee;
+            color: #c62828;
+            font-weight: 600;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+        .risk-medium {
+            background: #fff3e0;
+            color: #ef6c00;
+            font-weight: 600;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+        .risk-low {
+            background: #e3f2fd;
+            color: #1565c0;
+            font-weight: 600;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+        .risk-none {
+            background: #e8f5e9;
+            color: #2e7d32;
+            font-weight: 600;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+        .risk-unknown {
+            background: #f5f5f5;
+            color: #757575;
+            font-weight: 600;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+        .flags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+        }
+        .flag-tag {
+            background: #fff3e0;
+            color: #ef6c00;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 11px;
+        }
+        .notes {
+            font-size: 12px;
+            color: #666;
+            max-width: 300px;
+        }
+        .timestamp {
+            font-size: 12px;
+            color: #999;
+        }
+        .no-results {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+        .error {
+            background: #ffebee;
+            color: #c62828;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        .back-link {
+            margin-bottom: 20px;
+        }
+        .back-link a {
+            color: #0066cc;
+            text-decoration: none;
+        }
+        .back-link a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="back-link"><a href="/">Back to Flood Risk Checker</a></div>
+    <h1>Flood Anomalies</h1>
+    <p class="subtitle">Flagged data anomalies from the flood screening tool</p>
+
+    <div class="toolbar">
+        <button id="refreshBtn" onclick="loadAnomalies()">Refresh</button>
+        <button id="clearBtn" onclick="clearAll()">Clear All</button>
+        <span id="status" class="status"></span>
+    </div>
+
+    <div id="error" class="error" style="display: none;"></div>
+
+    <div class="results-section">
+        <table id="resultsTable" style="display: none;">
+            <thead>
+                <tr>
+                    <th>Address</th>
+                    <th>Risk</th>
+                    <th>Source</th>
+                    <th>Scope</th>
+                    <th>Flags</th>
+                    <th>Notes</th>
+                    <th>Created</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="resultsBody">
+            </tbody>
+        </table>
+        <div id="noResults" class="no-results">
+            No anomalies have been flagged yet.
+        </div>
+    </div>
+
+    <script>
+        async function loadAnomalies() {
+            const status = document.getElementById('status');
+            const errorDiv = document.getElementById('error');
+            const table = document.getElementById('resultsTable');
+            const noResults = document.getElementById('noResults');
+
+            status.textContent = 'Loading...';
+            errorDiv.style.display = 'none';
+
+            try {
+                const response = await fetch('/v1/screening/flood-anomalies');
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                displayAnomalies(data);
+                status.textContent = `${data.length} anomal${data.length === 1 ? 'y' : 'ies'} found.`;
+
+            } catch (err) {
+                errorDiv.textContent = `Error: ${err.message}`;
+                errorDiv.style.display = 'block';
+                status.textContent = '';
+            }
+        }
+
+        function displayAnomalies(anomalies) {
+            const tbody = document.getElementById('resultsBody');
+            const table = document.getElementById('resultsTable');
+            const noResults = document.getElementById('noResults');
+
+            if (anomalies.length === 0) {
+                table.style.display = 'none';
+                noResults.style.display = 'block';
+                return;
+            }
+
+            tbody.innerHTML = anomalies.map(a => {
+                const flags = [];
+                if (a.metricsMissing) flags.push('Metrics missing');
+                if (a.disagreesWithFloodWise) flags.push('Disagrees with FloodWise');
+                if (a.buildingSafeButLandWet) flags.push('Building safe but land wet');
+                if (a.geocodeLooksWrong) flags.push('Geocode wrong');
+                if (a.otherReason) flags.push('Other');
+
+                const flagsHtml = flags.length > 0
+                    ? flags.map(f => `<span class="flag-tag">${escapeHtml(f)}</span>`).join('')
+                    : '-';
+
+                const created = a.createdUtc
+                    ? new Date(a.createdUtc).toLocaleString()
+                    : '-';
+
+                return `
+                    <tr>
+                        <td>${escapeHtml(a.address)}</td>
+                        <td><span class="risk-${(a.overallRisk || 'unknown').toLowerCase()}">${escapeHtml(a.overallRisk || 'Unknown')}</span></td>
+                        <td>${escapeHtml(a.source || '-')}</td>
+                        <td>${escapeHtml(a.scope || '-')}</td>
+                        <td class="flags">${flagsHtml}</td>
+                        <td class="notes">${escapeHtml(a.notes || '')}</td>
+                        <td class="timestamp">${created}</td>
+                        <td><button class="delete-btn" onclick="deleteAnomaly('${escapeHtml(a.id)}')">Delete</button></td>
+                    </tr>
+                `;
+            }).join('');
+
+            table.style.display = 'table';
+            noResults.style.display = 'none';
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        async function deleteAnomaly(id) {
+            const status = document.getElementById('status');
+            const errorDiv = document.getElementById('error');
+
+            status.textContent = 'Deleting...';
+            errorDiv.style.display = 'none';
+
+            try {
+                const response = await fetch(`/v1/screening/flood-anomalies/${encodeURIComponent(id)}`, {
+                    method: 'DELETE'
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                await loadAnomalies();
+            } catch (err) {
+                errorDiv.textContent = `Error: ${err.message}`;
+                errorDiv.style.display = 'block';
+                status.textContent = '';
+            }
+        }
+
+        async function clearAll() {
+            if (!confirm('Clear all anomalies? This cannot be undone.')) return;
+
+            const status = document.getElementById('status');
+            const clearBtn = document.getElementById('clearBtn');
+            const errorDiv = document.getElementById('error');
+
+            clearBtn.disabled = true;
+            status.textContent = 'Clearing...';
+            errorDiv.style.display = 'none';
+
+            try {
+                const response = await fetch('/v1/screening/flood-anomalies', {
+                    method: 'DELETE'
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                await loadAnomalies();
+            } catch (err) {
+                errorDiv.textContent = `Error: ${err.message}`;
+                errorDiv.style.display = 'block';
+                status.textContent = '';
+            } finally {
+                clearBtn.disabled = false;
+            }
+        }
+
+        // Load on page load
+        loadAnomalies();
+    </script>
+</body>
+</html>

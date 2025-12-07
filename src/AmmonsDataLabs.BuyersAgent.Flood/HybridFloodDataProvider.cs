@@ -142,15 +142,22 @@ public sealed class HybridFloodDataProvider(
 
         var isInside = hit.Proximity == FloodZoneProximity.Inside;
 
-        var reason = isInside
-            ? $"Location falls inside {hit.Zone.Risk} likelihood flood zone (point buffer)."
-            : $"Location is {hit.DistanceMetres:F1}m from {hit.Zone.Risk} likelihood flood zone (point buffer).";
+        string reason;
+        switch (isInside)
+        {
+            case true when hit.Zone.Risk == FloodRisk.Unknown:
+                // Consolidated message for unclassified flood extents
+                reason = "Property is inside an unclassified flood extent (point buffer). Manual FloodWise check recommended.";
+                break;
+            case true:
+                reason = $"Location falls inside {hit.Zone.Risk} likelihood flood zone (point buffer).";
+                break;
+            default:
+                reason = $"Location is {hit.DistanceMetres:F1}m from {hit.Zone.Risk} likelihood flood zone (point buffer).";
+                break;
+        }
 
         var reasons = new List<string> { reason };
-
-        // Add guidance for Unknown risk inside an extent
-        if (isInside && hit.Zone.Risk == FloodRisk.Unknown)
-            reasons.Add("Property is inside an unclassified flood extent. Manual FloodWise check recommended.");
 
         return new FloodLookupResult
         {

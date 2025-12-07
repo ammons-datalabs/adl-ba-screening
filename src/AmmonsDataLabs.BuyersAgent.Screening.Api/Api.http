@@ -3,30 +3,51 @@
 ### Health check
 GET {{Api_HostAddress}}/health
 
-### Flood lookup - multiple properties
+###############################################################################
+# FLOOD LOOKUP
+###############################################################################
+
+### Flood lookup - sample addresses demonstrating different risk levels and scopes
 POST {{Api_HostAddress}}/v1/screening/flood/lookup
 Content-Type: application/json
 
 {
   "properties": [
-    {
-      "address": "123 Fake Street, Brisbane QLD"
-    },
-    {
-      "address": "456 Main Road, Mount Gravatt QLD"
-    }
+    { "address": "3/241 Horizon Dr, Westlake" },
+    { "address": "117 Fernberg Rd, Paddington" },
+    { "address": "118 Fernberg Rd, Paddington" },
+    { "address": "57 Inskip St, Rocklea" },
+    { "address": "5 Bellambi Pl, Westlake" }
   ]
 }
 
-### Flood lookup - single property
+### Flood lookup - single property (High risk, plan-level fallback)
 POST {{Api_HostAddress}}/v1/screening/flood/lookup
 Content-Type: application/json
 
 {
   "properties": [
-    {
-      "address": "10 River Terrace, Auchenflower QLD"
-    }
+    { "address": "57 Inskip Street, Rocklea QLD" }
+  ]
+}
+
+### Flood lookup - single property (None risk, lot-specific)
+POST {{Api_HostAddress}}/v1/screening/flood/lookup
+Content-Type: application/json
+
+{
+  "properties": [
+    { "address": "117 Fernberg Road, Paddington QLD" }
+  ]
+}
+
+### Flood lookup - point buffer fallback (Unknown risk, inside flood extent)
+POST {{Api_HostAddress}}/v1/screening/flood/lookup
+Content-Type: application/json
+
+{
+  "properties": [
+    { "address": "5 Bellambi Place, Westlake QLD" }
   ]
 }
 
@@ -37,5 +58,44 @@ Content-Type: application/json
 {
   "properties": []
 }
+
+###############################################################################
+# FLOOD ANOMALIES
+###############################################################################
+
+### Get all anomaly reports
+GET {{Api_HostAddress}}/v1/screening/flood-anomalies
+
+### Create a new anomaly report
+POST {{Api_HostAddress}}/v1/screening/flood-anomalies
+Content-Type: application/json
+
+{
+  "address": "123 Test Street, Brisbane",
+  "overallRisk": "High",
+  "source": "BCC Parcel Metrics",
+  "scope": "Plan-level (aggregated)",
+  "metricsMissing": false,
+  "disagreesWithFloodWise": true,
+  "buildingSafeButLandWet": false,
+  "geocodeLooksWrong": false,
+  "otherReason": false,
+  "notes": "FloodWise shows this property as Low risk, not High"
+}
+
+### Create anomaly - missing address (should return 400)
+POST {{Api_HostAddress}}/v1/screening/flood-anomalies
+Content-Type: application/json
+
+{
+  "address": "",
+  "overallRisk": "High"
+}
+
+### Delete a specific anomaly by ID (replace with actual ID)
+DELETE {{Api_HostAddress}}/v1/screening/flood-anomalies/replace-with-actual-id
+
+### Clear all anomaly reports
+DELETE {{Api_HostAddress}}/v1/screening/flood-anomalies
 
 ###

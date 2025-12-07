@@ -42,9 +42,9 @@ public class FloodEndpointTests(CustomWebApplicationFactory factory) : IClassFix
 
         var result = body.Results[0];
         Assert.Equal(StreetAddress, result.Address);
-        Assert.Equal(FloodRisk.Low, result.Risk);
-        Assert.NotNull(result.Reasons);
-        Assert.NotEmpty(result.Reasons);
+        Assert.Equal("Low", result.OverallRisk);
+        Assert.NotNull(result.Notes);
+        Assert.NotEmpty(result.Notes);
     }
 
     [Fact]
@@ -68,9 +68,9 @@ public class FloodEndpointTests(CustomWebApplicationFactory factory) : IClassFix
 
         var result = body.Results[0];
         Assert.Equal(MainRoadAddress, result.Address);
-        Assert.Equal(FloodRisk.High, result.Risk);
-        Assert.NotNull(result.Reasons);
-        Assert.NotEmpty(result.Reasons);
+        Assert.Equal("High", result.OverallRisk);
+        Assert.NotNull(result.Notes);
+        Assert.NotEmpty(result.Notes);
     }
 
     [Fact]
@@ -94,7 +94,7 @@ public class FloodEndpointTests(CustomWebApplicationFactory factory) : IClassFix
 
         var result = body.Results[0];
         Assert.Equal(UnknownAddress, result.Address);
-        Assert.Equal(FloodRisk.Unknown, result.Risk);
+        Assert.Equal("Unknown", result.OverallRisk);
     }
 
     [Fact]
@@ -121,13 +121,13 @@ public class FloodEndpointTests(CustomWebApplicationFactory factory) : IClassFix
         Assert.NotNull(body);
         Assert.Equal(3, body.Results.Count);
 
-        Assert.Equal(FloodRisk.Low, body.Results[0].Risk);
-        Assert.Equal(FloodRisk.High, body.Results[1].Risk);
-        Assert.Equal(FloodRisk.Unknown, body.Results[2].Risk);
+        Assert.Equal("Low", body.Results[0].OverallRisk);
+        Assert.Equal("High", body.Results[1].OverallRisk);
+        Assert.Equal("Unknown", body.Results[2].OverallRisk);
     }
 
     [Fact]
-    public async Task FloodLookup_ResponseHasNonNullReasons()
+    public async Task FloodLookup_ResponseHasNonNullNotes()
     {
         // Arrange
         var payload = new FloodLookupRequest
@@ -152,7 +152,7 @@ public class FloodEndpointTests(CustomWebApplicationFactory factory) : IClassFix
         {
             Assert.NotNull(result.Address);
             Assert.NotEmpty(result.Address);
-            Assert.NotNull(result.Reasons);
+            Assert.NotNull(result.Notes);
         });
     }
 

@@ -20,8 +20,9 @@ public class FloodSummaryMapperTests
 
         Assert.Equal("3/241 Horizon Drive, Westlake", summary.Address);
         Assert.Equal("High", summary.OverallRisk);
-        Assert.Equal("BCC_PARCEL_METRICS", summary.Source);
-        Assert.Equal("PlanFallback", summary.Scope);
+        Assert.Equal("High*", summary.RiskLabel); // PlanFallback scope gets asterisk to indicate plan-level estimate
+        Assert.Equal("BCC Parcel Metrics", summary.Source);
+        Assert.Equal("Plan-level (aggregated)", summary.Scope);
         Assert.True(summary.HasFloodInfo);
         Assert.Contains("GTP102995", summary.Notes);
     }
@@ -41,7 +42,8 @@ public class FloodSummaryMapperTests
         var summary = FloodSummaryMapper.FromResult(result);
 
         Assert.Equal("None", summary.OverallRisk);
-        Assert.Equal("Parcel", summary.Scope);
+        Assert.Equal("None", summary.RiskLabel); // Known BCC risk = passes through
+        Assert.Equal("Lot-specific", summary.Scope);
         Assert.True(summary.HasFloodInfo);
     }
 
@@ -60,7 +62,8 @@ public class FloodSummaryMapperTests
         var summary = FloodSummaryMapper.FromResult(result);
 
         Assert.Equal("Unknown", summary.OverallRisk);
-        Assert.Equal("UNKNOWN", summary.Source);
+        Assert.Equal("No mapped flood risk", summary.RiskLabel); // No extent intersection = no flood data
+        Assert.Equal("Unknown", summary.Source);
         Assert.False(summary.HasFloodInfo);
     }
 
@@ -78,7 +81,7 @@ public class FloodSummaryMapperTests
 
         var summary = FloodSummaryMapper.FromResult(result);
 
-        Assert.Equal("POINT_BUFFER", summary.Source);
+        Assert.Equal("Point Buffer (30m)", summary.Source);
         Assert.True(summary.HasFloodInfo);
     }
 
@@ -128,14 +131,14 @@ public class FloodSummaryMapperTests
             Source = FloodDataSource.PointBuffer,
             Scope = FloodDataScope.Unknown,
             HasAnyExtentIntersection = true,
-            Reasons = ["Location falls inside Unknown likelihood flood zone (point buffer).",
-                       "Property is inside an unclassified flood extent. Manual FloodWise check recommended."]
+            Reasons = ["Property is inside an unclassified flood extent (point buffer). Manual FloodWise check recommended."]
         };
 
         var summary = FloodSummaryMapper.FromResult(result);
 
         Assert.Equal("Unknown", summary.OverallRisk);
-        Assert.Equal("POINT_BUFFER", summary.Source);
+        Assert.Equal("Check manually", summary.RiskLabel); // Extent intersection = actionable label
+        Assert.Equal("Point Buffer (30m)", summary.Source);
         Assert.True(summary.HasFloodInfo); // Key assertion: HasFloodInfo is true despite Unknown risk
         Assert.Contains("unclassified flood extent", summary.Notes);
     }
@@ -157,6 +160,7 @@ public class FloodSummaryMapperTests
         var summary = FloodSummaryMapper.FromResult(result);
 
         Assert.Equal("Unknown", summary.OverallRisk);
+        Assert.Equal("No mapped flood risk", summary.RiskLabel);
         Assert.False(summary.HasFloodInfo); // No extent intersection = no flood info
     }
 
@@ -177,6 +181,7 @@ public class FloodSummaryMapperTests
         var summary = FloodSummaryMapper.FromResult(result);
 
         Assert.Equal("Low", summary.OverallRisk);
+        Assert.Equal("Low", summary.RiskLabel); // Known BCC risk = passes through
         Assert.True(summary.HasFloodInfo);
     }
 }

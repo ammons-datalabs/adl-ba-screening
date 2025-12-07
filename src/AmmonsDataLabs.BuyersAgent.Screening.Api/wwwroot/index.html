@@ -189,18 +189,133 @@
             font-size: 12px;
             color: #666;
         }
+        .flag-btn {
+            padding: 4px 8px;
+            font-size: 12px;
+            background: #fff3e0;
+            color: #ef6c00;
+            border: 1px solid #ef6c00;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .flag-btn:hover {
+            background: #ffe0b2;
+        }
+        .anomaly-panel {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            background: white;
+        }
+        .anomaly-panel h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        .anomaly-address {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 15px;
+        }
+        .checkbox-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        .checkbox-group label {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-weight: normal;
+            cursor: pointer;
+        }
+        .anomaly-notes {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-family: inherit;
+            resize: vertical;
+        }
+        .anomaly-buttons {
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .anomaly-status {
+            color: #2e7d32;
+            font-size: 14px;
+        }
+        .anomaly-status.error {
+            color: #c62828;
+            background: none;
+            padding: 0;
+        }
+        .info-section {
+            background: #e3f2fd;
+            border: 1px solid #90caf9;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+        .info-section h3 {
+            margin-top: 0;
+            color: #1565c0;
+            font-size: 16px;
+        }
+        .info-section h4 {
+            margin: 15px 0 8px 0;
+            color: #1565c0;
+            font-size: 14px;
+        }
+        .info-section p {
+            margin: 5px 0;
+            color: #333;
+        }
+        .info-section ul {
+            margin: 5px 0 10px 0;
+            padding-left: 20px;
+        }
+        .info-section li {
+            margin: 4px 0;
+        }
+        .info-section code {
+            background: #fff;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 13px;
+        }
+        .info-toggle {
+            cursor: pointer;
+            color: #1565c0;
+            text-decoration: underline;
+            font-size: 13px;
+        }
+        .info-toggle:hover {
+            color: #0d47a1;
+        }
+        .status-implemented {
+            color: #2e7d32;
+        }
+        .status-not-implemented {
+            color: #757575;
+        }
     </style>
 </head>
 <body>
     <h1>Flood Risk Checker</h1>
-    <p class="subtitle">BCC Flood Screening Tool - Enter addresses to check flood risk</p>
+    <p class="subtitle">BCC Flood Screening Tool - Enter addresses to check flood risk | <a href="/anomalies.html">View Anomalies</a></p>
 
     <div class="input-section">
         <label for="addresses">Addresses (one per line)</label>
-        <textarea id="addresses" placeholder="3/241 Horizon Drive, Westlake
-117 Fernberg Road, Paddington
-118 Fernberg Road, Paddington
-26 Magnolia St, Stretton"></textarea>
+        <textarea id="addresses" placeholder="3/241 Horizon Dr, Westlake
+117 Fernberg Rd, Paddington
+118 Fernberg Rd, Paddington
+57 Inskip St, Rocklea
+5 Bellambi Pl, Westlake"></textarea>
         <p class="hint">Enter Queensland addresses. State and postcode are optional.</p>
         <div class="button-row">
             <button id="checkBtn" onclick="checkFloodRisk()">Check Flood Risk</button>
@@ -209,10 +324,45 @@
         </div>
     </div>
 
+    <div class="info-section">
+        <h3>How This Tool Works <span class="info-toggle" onclick="toggleInfo()">(show/hide details)</span></h3>
+        <div id="infoDetails">
+            <p>This tool checks flood risk using BCC open data. Results should be verified against <a href="https://floodwise.brisbane.qld.gov.au/" target="_blank">FloodWise</a> for critical decisions.</p>
+
+            <h4>Data Sources (in priority order)</h4>
+            <ul>
+                <li><span class="status-implemented">Implemented:</span> <strong>BCC Parcel Metrics</strong> - Pre-computed flood flags from BCC for each lot/plan. Most accurate when lot-specific data is available.</li>
+                <li><span class="status-not-implemented">Not yet implemented:</span> <strong>Parcel Geometry Intersection</strong> - Would use actual parcel boundaries to check flood extent overlap. Planned for a future update.</li>
+                <li><span class="status-implemented">Implemented:</span> <strong>Point Buffer (30m)</strong> - Fallback when parcel data unavailable. Checks if a 30-metre radius around the geocoded address point intersects any flood extent.</li>
+            </ul>
+
+            <h4>Understanding the "Scope" Column</h4>
+            <ul>
+                <li><strong>Lot-specific</strong> - Data is for the exact lot (e.g., Lot 4 on RP12345). Most reliable.</li>
+                <li><strong>Plan-level (aggregated)</strong> - Lot-specific data wasn't available, so we're using the worst-case risk from the entire plan. <em>This may overstate risk</em> because the plan might contain multiple lots with different flood levels. Always verify these results in FloodWise.</li>
+                <li><strong>Unknown</strong> - Typically from point buffer fallback where we only know if flood extents are nearby, not the specific risk level.</li>
+            </ul>
+
+            <h4>Understanding the Risk Column</h4>
+            <ul>
+                <li><strong>High / Medium / Low / None</strong> - Lot-specific risk level from BCC data.</li>
+                <li><strong>High* / Medium* / Low*</strong> - Risk marked with <strong>*</strong> is a plan-level estimate (see "Scope" above). Verify in FloodWise.</li>
+                <li><strong>Check manually</strong> - Property is inside a flood extent but we couldn't determine the specific risk level. Verify in FloodWise.</li>
+            </ul>
+
+            <h4>Known Limitations</h4>
+            <ul>
+                <li><strong>Plan-level results (*) may overstate risk</strong> - If we don't have lot-specific BCC metrics, we use plan-level data which shows the highest risk across all lots in that plan.</li>
+                <li><strong>Point Buffer shows "Unknown" risk</strong> - We can detect flood extent proximity but not determine High/Medium/Low without parcel geometry intersection (coming soon).</li>
+                <li><strong>Geocoding accuracy</strong> - Address matching depends on Google geocoding. Unusual addresses may geocode incorrectly.</li>
+            </ul>
+        </div>
+    </div>
+
     <div id="error" class="error" style="display: none;"></div>
 
     <div class="results-section">
-        <div id="summary" class="summary" style="display: none;"></div>
+        <p id="sortNote" class="hint" style="display: none; margin-top: 0; margin-bottom: 10px;">Results sorted from lowest to highest flood risk.</p>
         <table id="resultsTable" style="display: none;">
             <thead>
                 <tr>
@@ -221,6 +371,7 @@
                     <th>Source</th>
                     <th>Scope</th>
                     <th>Notes</th>
+                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody id="resultsBody">
@@ -231,8 +382,41 @@
         </div>
     </div>
 
+    <div id="anomalyPanel" class="anomaly-panel" style="display: none;">
+        <h3>Flag Data Anomaly</h3>
+        <p class="anomaly-address" id="anomalyAddress"></p>
+        <div class="checkbox-group">
+            <label><input type="checkbox" id="chkMetricsMissing"> Metrics missing</label>
+            <label><input type="checkbox" id="chkDisagrees"> Disagrees with FloodWise</label>
+            <label><input type="checkbox" id="chkBuildingSafe"> Building safe but land wet</label>
+            <label><input type="checkbox" id="chkGeocode"> Geocode looks wrong</label>
+            <label><input type="checkbox" id="chkOther"> Other</label>
+        </div>
+        <textarea class="anomaly-notes" id="anomalyNotes" rows="3" placeholder="Additional notes..."></textarea>
+        <div class="anomaly-buttons">
+            <button id="submitAnomalyBtn" onclick="submitAnomaly()">Submit</button>
+            <button id="cancelAnomalyBtn" onclick="cancelAnomaly()">Cancel</button>
+            <span id="anomalyStatus" class="anomaly-status"></span>
+        </div>
+    </div>
+
     <script>
-        const riskOrder = { 'High': 0, 'Medium': 1, 'Low': 2, 'None': 3, 'Unknown': 4 };
+        // Sort order: lowest risk first, Unknown with flood info treated as high risk
+        // None=0, Low=1, Medium=2, High=3, Unknown(with flood info)=4
+        const riskOrder = { 'None': 0, 'Low': 1, 'Medium': 2, 'High': 3, 'Unknown': 4 };
+        let currentAnomalyResult = null;
+
+        function getSortKey(result) {
+            // Unknown with hasFloodInfo should sort as worst case (after High)
+            if (result.overallRisk === 'Unknown' && result.hasFloodInfo) {
+                return 4; // After High (3)
+            }
+            // Unknown without flood info (e.g., geocoding failure) sorts at the end
+            if (result.overallRisk === 'Unknown') {
+                return 5;
+            }
+            return riskOrder[result.overallRisk] ?? 5;
+        }
 
         async function checkFloodRisk() {
             const textarea = document.getElementById('addresses');
@@ -289,36 +473,26 @@
         function displayResults(results) {
             const tbody = document.getElementById('resultsBody');
             const table = document.getElementById('resultsTable');
-            const summary = document.getElementById('summary');
 
-            // Sort by risk (High first)
-            results.sort((a, b) => (riskOrder[a.risk] ?? 5) - (riskOrder[b.risk] ?? 5));
+            // Sort by risk: lowest risk first (None, Low, Medium, High, Unknown with flood info)
+            results.sort((a, b) => getSortKey(a) - getSortKey(b));
 
-            // Build summary
-            const counts = { High: 0, Medium: 0, Low: 0, None: 0, Unknown: 0 };
-            results.forEach(r => counts[r.risk] = (counts[r.risk] || 0) + 1);
-
-            summary.innerHTML = Object.entries(counts)
-                .filter(([_, count]) => count > 0)
-                .map(([risk, count]) => `
-                    <div class="summary-item">
-                        <strong>${count}</strong>
-                        <span class="risk-${risk.toLowerCase()}">${risk}</span>
-                    </div>
-                `).join('');
-            summary.style.display = 'flex';
-
-            // Build table
-            tbody.innerHTML = results.map(r => `
+            // Build table - use overallRisk for CSS styling, riskLabel for display text
+            tbody.innerHTML = results.map((r, idx) => `
                 <tr>
                     <td>${escapeHtml(r.address)}</td>
-                    <td><span class="risk-${r.risk.toLowerCase()}">${r.risk}</span></td>
-                    <td>${r.source || '-'}</td>
-                    <td>${r.scope || '-'}</td>
-                    <td class="reasons">${escapeHtml((r.reasons || []).join(' '))}</td>
+                    <td><span class="risk-${(r.overallRisk || 'unknown').toLowerCase()}">${escapeHtml(r.riskLabel)}</span></td>
+                    <td>${escapeHtml(r.source || '-')}</td>
+                    <td>${escapeHtml(r.scope || '-')}</td>
+                    <td class="reasons">${escapeHtml(r.notes || '')}</td>
+                    <td><button class="flag-btn" onclick="openAnomalyForm(${idx})">Flag</button></td>
                 </tr>
             `).join('');
 
+            // Store results for anomaly form
+            window.lastResults = results;
+
+            document.getElementById('sortNote').style.display = 'block';
             table.style.display = 'table';
         }
 
@@ -326,7 +500,7 @@
             document.getElementById('addresses').value = '';
             document.getElementById('resultsBody').innerHTML = '';
             document.getElementById('resultsTable').style.display = 'none';
-            document.getElementById('summary').style.display = 'none';
+            document.getElementById('sortNote').style.display = 'none';
             document.getElementById('noResults').style.display = 'block';
             document.getElementById('error').style.display = 'none';
             document.getElementById('status').textContent = '';
@@ -337,6 +511,80 @@
             const div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML;
+        }
+
+        function openAnomalyForm(idx) {
+            const result = window.lastResults[idx];
+            currentAnomalyResult = result;
+
+            document.getElementById('anomalyAddress').textContent = result.address;
+            document.getElementById('chkMetricsMissing').checked = false;
+            document.getElementById('chkDisagrees').checked = false;
+            document.getElementById('chkBuildingSafe').checked = false;
+            document.getElementById('chkGeocode').checked = false;
+            document.getElementById('chkOther').checked = false;
+            document.getElementById('anomalyNotes').value = '';
+            document.getElementById('anomalyStatus').textContent = '';
+
+            document.getElementById('anomalyPanel').style.display = 'block';
+            document.getElementById('anomalyPanel').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function cancelAnomaly() {
+            document.getElementById('anomalyPanel').style.display = 'none';
+            currentAnomalyResult = null;
+        }
+
+        async function submitAnomaly() {
+            if (!currentAnomalyResult) return;
+
+            const statusEl = document.getElementById('anomalyStatus');
+            const submitBtn = document.getElementById('submitAnomalyBtn');
+
+            const report = {
+                address: currentAnomalyResult.address,
+                overallRisk: currentAnomalyResult.overallRisk,
+                source: currentAnomalyResult.source || 'Unknown',
+                scope: currentAnomalyResult.scope || 'Unknown',
+                metricsMissing: document.getElementById('chkMetricsMissing').checked,
+                disagreesWithFloodWise: document.getElementById('chkDisagrees').checked,
+                buildingSafeButLandWet: document.getElementById('chkBuildingSafe').checked,
+                geocodeLooksWrong: document.getElementById('chkGeocode').checked,
+                otherReason: document.getElementById('chkOther').checked,
+                notes: document.getElementById('anomalyNotes').value
+            };
+
+            submitBtn.disabled = true;
+            statusEl.textContent = 'Submitting...';
+            statusEl.classList.remove('error');
+
+            try {
+                const response = await fetch('/v1/screening/flood-anomalies', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(report)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                statusEl.textContent = 'Saved!';
+                setTimeout(() => {
+                    document.getElementById('anomalyPanel').style.display = 'none';
+                    currentAnomalyResult = null;
+                }, 1000);
+            } catch (err) {
+                statusEl.textContent = `Error: ${err.message}`;
+                statusEl.classList.add('error');
+            } finally {
+                submitBtn.disabled = false;
+            }
+        }
+
+        function toggleInfo() {
+            const details = document.getElementById('infoDetails');
+            details.style.display = details.style.display === 'none' ? 'block' : 'none';
         }
 
         // Allow Ctrl+Enter to submit
