@@ -279,7 +279,7 @@
                         <td class="flags">${flagsHtml}</td>
                         <td class="notes">${escapeHtml(a.notes || '')}</td>
                         <td class="timestamp">${created}</td>
-                        <td><button class="delete-btn" onclick="deleteAnomaly('${a.id}')">Delete</button></td>
+                        <td><button class="delete-btn" onclick="deleteAnomaly('${escapeHtml(a.id)}')">Delete</button></td>
                     </tr>
                 `;
             }).join('');
@@ -303,7 +303,7 @@
             errorDiv.style.display = 'none';
 
             try {
-                const response = await fetch(`/v1/screening/flood-anomalies/${id}`, {
+                const response = await fetch(`/v1/screening/flood-anomalies/${encodeURIComponent(id)}`, {
                     method: 'DELETE'
                 });
 
