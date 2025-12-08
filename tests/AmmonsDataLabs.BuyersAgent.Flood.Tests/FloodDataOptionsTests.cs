@@ -10,7 +10,9 @@ public class FloodDataOptionsTests
         var options = new FloodDataOptions();
 
         Assert.Equal("/data/flood", options.DataRoot);
-        Assert.Equal("bcc/flood-awareness-extents.ndjson", options.ExtentsFile);
-        Assert.Equal("bcc/flood-awareness-overall.ndjson", options.OverallRiskFile);
+        Assert.Equal("bcc/flood-extents.ndjson", options.ExtentsFile);
+        Assert.Equal("bcc/flood-risk.ndjson", options.OverallRiskFile);
+        Assert.Equal("bcc/parcel-metrics.ndjson", options.BccParcelMetricsParcelFile);
+        Assert.Equal("bcc/plan-metrics.ndjson", options.BccParcelMetricsPlanFile);
     }
 }
