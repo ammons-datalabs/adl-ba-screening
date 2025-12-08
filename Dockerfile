@@ -11,5 +11,13 @@ RUN dotnet publish "src/AmmonsDataLabs.BuyersAgent.Screening.Api/AmmonsDataLabs.
 FROM base AS final
 WORKDIR /app
 COPY --from=build /app/publish .
+
+# Copy local flood data into the container at /data
+# data/ is .gitignored but available to Docker build
+# Layout: data/flood/bcc/*.ndjson
+COPY data /data
+
 ENV ASPNETCORE_URLS=http://+:8080
+ENV ASPNETCORE_ENVIRONMENT=Production
+
 ENTRYPOINT ["dotnet", "AmmonsDataLabs.BuyersAgent.Screening.Api.dll"]
