@@ -20,7 +20,7 @@ public class HybridFloodDataProviderTests
                 EvidenceMetrics = ["FL_HIGH_RIVER"]
             });
 
-        var provider = new HybridFloodDataProvider(geocoder, metricsIndex, new StubFloodZoneIndex(null));
+        var provider = new HybridFloodDataProvider(geocoder, metricsIndex, new StubFloodZoneIndex(null), new StubLotPlanLookup());
 
         var result = await provider.LookupAsync("3/241 Horizon Drive, Westlake");
 
@@ -47,7 +47,7 @@ public class HybridFloodDataProviderTests
                 EvidenceMetrics = ["FL_HIGH_RIVER"]
             });
 
-        var provider = new HybridFloodDataProvider(geocoder, metricsIndex, new StubFloodZoneIndex(null));
+        var provider = new HybridFloodDataProvider(geocoder, metricsIndex, new StubFloodZoneIndex(null), new StubLotPlanLookup());
 
         var result = await provider.LookupAsync("3/241 Horizon Drive, Westlake");
 
@@ -73,7 +73,7 @@ public class HybridFloodDataProviderTests
                 EvidenceMetrics = []
             });
 
-        var provider = new HybridFloodDataProvider(geocoder, metricsIndex, new StubFloodZoneIndex(null));
+        var provider = new HybridFloodDataProvider(geocoder, metricsIndex, new StubFloodZoneIndex(null), new StubLotPlanLookup());
 
         var result = await provider.LookupAsync("117 Fernberg Rd, Paddington");
 
@@ -103,7 +103,7 @@ public class HybridFloodDataProviderTests
 
         var zoneIndex = new StubFloodZoneIndex(zone);
 
-        var provider = new HybridFloodDataProvider(geocoder, metricsIndex, zoneIndex);
+        var provider = new HybridFloodDataProvider(geocoder, metricsIndex, zoneIndex, new StubLotPlanLookup());
 
         var result = await provider.LookupAsync("123 Unknown St");
 
@@ -134,7 +134,7 @@ public class HybridFloodDataProviderTests
 
         var zoneIndex = new StubFloodZoneIndex(zone);
 
-        var provider = new HybridFloodDataProvider(geocoder, metricsIndex, zoneIndex);
+        var provider = new HybridFloodDataProvider(geocoder, metricsIndex, zoneIndex, new StubLotPlanLookup());
 
         var result = await provider.LookupAsync("456 New Development St");
 
@@ -150,7 +150,7 @@ public class HybridFloodDataProviderTests
         var metricsIndex = new StubMetricsIndex();
         var zoneIndex = new StubFloodZoneIndex(null);
 
-        var provider = new HybridFloodDataProvider(geocoder, metricsIndex, zoneIndex);
+        var provider = new HybridFloodDataProvider(geocoder, metricsIndex, zoneIndex, new StubLotPlanLookup());
 
         var result = await provider.LookupAsync("   ");
 
@@ -165,7 +165,7 @@ public class HybridFloodDataProviderTests
         var metricsIndex = new StubMetricsIndex();
         var zoneIndex = new StubFloodZoneIndex(null);
 
-        var provider = new HybridFloodDataProvider(geocoder, metricsIndex, zoneIndex);
+        var provider = new HybridFloodDataProvider(geocoder, metricsIndex, zoneIndex, new StubLotPlanLookup());
 
         var result = await provider.LookupAsync("999 Nowhere St");
 
@@ -195,7 +195,7 @@ public class HybridFloodDataProviderTests
         // Use a zone index that returns "Near" proximity with distance
         var zoneIndex = new NearFloodZoneIndex(zone, 15.5);
 
-        var provider = new HybridFloodDataProvider(geocoder, metricsIndex, zoneIndex);
+        var provider = new HybridFloodDataProvider(geocoder, metricsIndex, zoneIndex, new StubLotPlanLookup());
 
         var result = await provider.LookupAsync("123 Near Zone St");
 
@@ -214,7 +214,7 @@ public class HybridFloodDataProviderTests
         var metricsIndex = new StubMetricsIndex();
         var zoneIndex = new StubFloodZoneIndex(null);
 
-        var provider = new HybridFloodDataProvider(geocoder, metricsIndex, zoneIndex);
+        var provider = new HybridFloodDataProvider(geocoder, metricsIndex, zoneIndex, new StubLotPlanLookup());
 
         var result = await provider.LookupAsync("Some Address");
 
@@ -231,7 +231,7 @@ public class HybridFloodDataProviderTests
         var metricsIndex = new StubMetricsIndex();
         var zoneIndex = new StubFloodZoneIndex(null); // Returns null - no zone found
 
-        var provider = new HybridFloodDataProvider(geocoder, metricsIndex, zoneIndex);
+        var provider = new HybridFloodDataProvider(geocoder, metricsIndex, zoneIndex, new StubLotPlanLookup());
 
         var result = await provider.LookupAsync("789 Safe St");
 
@@ -257,7 +257,7 @@ public class HybridFloodDataProviderTests
                 EvidenceMetrics = ["FL_LOW_RIVER"]
             });
 
-        var provider = new HybridFloodDataProvider(geocoder, metricsIndex, new StubFloodZoneIndex(null));
+        var provider = new HybridFloodDataProvider(geocoder, metricsIndex, new StubFloodZoneIndex(null), new StubLotPlanLookup());
 
         var result = await provider.LookupAsync("118 Fernberg Rd, Paddington");
 
@@ -281,7 +281,7 @@ public class HybridFloodDataProviderTests
                 EvidenceMetrics = []
             });
 
-        var provider = new HybridFloodDataProvider(geocoder, metricsIndex, new StubFloodZoneIndex(null));
+        var provider = new HybridFloodDataProvider(geocoder, metricsIndex, new StubFloodZoneIndex(null), new StubLotPlanLookup());
 
         var result = await provider.LookupAsync("117 Fernberg Rd, Paddington");
 
@@ -311,7 +311,7 @@ public class HybridFloodDataProviderTests
 
         var zoneIndex = new StubFloodZoneIndex(zone);
 
-        var provider = new HybridFloodDataProvider(geocoder, metricsIndex, zoneIndex);
+        var provider = new HybridFloodDataProvider(geocoder, metricsIndex, zoneIndex, new StubLotPlanLookup());
 
         var result = await provider.LookupAsync("5 Bellambi Place, Westlake");
 
@@ -343,13 +343,79 @@ public class HybridFloodDataProviderTests
 
         var zoneIndex = new NearFloodZoneIndex(zone, 15.0);
 
-        var provider = new HybridFloodDataProvider(geocoder, metricsIndex, zoneIndex);
+        var provider = new HybridFloodDataProvider(geocoder, metricsIndex, zoneIndex, new StubLotPlanLookup());
 
         var result = await provider.LookupAsync("123 Near Zone St");
 
         Assert.Equal(FloodRisk.Low, result.Risk);
         Assert.Equal(FloodZoneProximity.Near, result.Proximity);
         Assert.False(result.HasAnyExtentIntersection); // Near, not inside
+    }
+
+    [Fact]
+    public async Task Lookup_UsesRiskOverlay_WhenTier3ReturnsUnknown()
+    {
+        // Simulates 222 Margaret Street scenario: inside unclassified extent but overlay has classified risk
+        var geocoder = new StubGeocoder("222 Margaret Street, Brisbane City", null);
+        var metricsIndex = new StubMetricsIndex();
+
+        var polygon = GeoFactory.CreatePolygon(
+            new GeoPoint(-27.48, 153.00),
+            new GeoPoint(-27.48, 153.05),
+            new GeoPoint(-27.45, 153.05),
+            new GeoPoint(-27.45, 153.00));
+
+        var unclassifiedZone = new FloodZone
+        {
+            Id = "extent-1",
+            Risk = FloodRisk.Unknown, // Unclassified extent
+            Geometry = polygon
+        };
+
+        // Zone index returns Unknown extent, but overlay returns High risk
+        var zoneIndex = new RiskOverlayFloodZoneIndex(unclassifiedZone, FloodRisk.High);
+
+        var provider = new HybridFloodDataProvider(geocoder, metricsIndex, zoneIndex, new StubLotPlanLookup());
+
+        var result = await provider.LookupAsync("222 Margaret Street, Brisbane City");
+
+        Assert.Equal(FloodRisk.High, result.Risk);
+        Assert.Equal(FloodZoneProximity.Inside, result.Proximity);
+        Assert.Equal(FloodDataSource.PointBuffer, result.Source);
+        Assert.True(result.HasAnyExtentIntersection);
+        Assert.Contains("risk overlay", string.Join(" ", result.Reasons), StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task Lookup_StillReturnsUnknown_WhenOverlayHasNoClassifiedRisk()
+    {
+        // When overlay also returns null, should still recommend manual check
+        var geocoder = new StubGeocoder("123 Unknown Zone St", null);
+        var metricsIndex = new StubMetricsIndex();
+
+        var polygon = GeoFactory.CreatePolygon(
+            new GeoPoint(-27.48, 153.00),
+            new GeoPoint(-27.48, 153.05),
+            new GeoPoint(-27.45, 153.05),
+            new GeoPoint(-27.45, 153.00));
+
+        var unclassifiedZone = new FloodZone
+        {
+            Id = "extent-1",
+            Risk = FloodRisk.Unknown,
+            Geometry = polygon
+        };
+
+        // Zone index returns Unknown extent, overlay also returns null
+        var zoneIndex = new RiskOverlayFloodZoneIndex(unclassifiedZone, null);
+
+        var provider = new HybridFloodDataProvider(geocoder, metricsIndex, zoneIndex, new StubLotPlanLookup());
+
+        var result = await provider.LookupAsync("123 Unknown Zone St");
+
+        Assert.Equal(FloodRisk.Unknown, result.Risk);
+        Assert.Contains("unclassified flood extent", string.Join(" ", result.Reasons), StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("FloodWise", string.Join(" ", result.Reasons));
     }
 
     // Test stub implementations
@@ -456,32 +522,27 @@ public class HybridFloodDataProviderTests
         }
     }
 
-    private sealed class StubFloodZoneIndex : IFloodZoneIndex
+    private sealed class StubFloodZoneIndex(FloodZone? zone) : IFloodZoneIndex
     {
-        private readonly FloodZone? _zone;
-
-        public StubFloodZoneIndex(FloodZone? zone)
-        {
-            _zone = zone;
-        }
-
         public FloodZone? FindZoneForPoint(GeoPoint point)
         {
-            return _zone;
+            return zone;
         }
 
         public FloodZoneHit? FindNearestZone(GeoPoint point, double maxDistanceMetres)
         {
-            if (_zone is null)
+            if (zone is null)
                 return null;
 
             return new FloodZoneHit
             {
-                Zone = _zone,
+                Zone = zone,
                 DistanceMetres = 0,
                 Proximity = FloodZoneProximity.Inside
             };
         }
+
+        public FloodRisk? FindRiskOverlayForPoint(GeoPoint point) => null;
     }
 
     private sealed class NearFloodZoneIndex : IFloodZoneIndex
@@ -509,6 +570,33 @@ public class HybridFloodDataProviderTests
                 DistanceMetres = _distance,
                 Proximity = FloodZoneProximity.Near
             };
+        }
+
+        public FloodRisk? FindRiskOverlayForPoint(GeoPoint point) => null;
+    }
+
+    private sealed class RiskOverlayFloodZoneIndex(FloodZone zone, FloodRisk? overlayRisk) : IFloodZoneIndex
+    {
+        public FloodZone? FindZoneForPoint(GeoPoint point) => zone;
+
+        public FloodZoneHit? FindNearestZone(GeoPoint point, double maxDistanceMetres)
+        {
+            return new FloodZoneHit
+            {
+                Zone = zone,
+                DistanceMetres = 0,
+                Proximity = FloodZoneProximity.Inside
+            };
+        }
+
+        public FloodRisk? FindRiskOverlayForPoint(GeoPoint point) => overlayRisk;
+    }
+
+    private sealed class StubLotPlanLookup(string? lotPlan = null) : ILotPlanLookup
+    {
+        public string? FindLotPlan(double latitude, double longitude, double maxDistanceMetres = 40.0)
+        {
+            return lotPlan;
         }
     }
 }

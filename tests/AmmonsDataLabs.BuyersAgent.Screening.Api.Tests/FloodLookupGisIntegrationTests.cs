@@ -153,6 +153,8 @@ public class FloodLookupGisIntegrationTests
                 };
             return null;
         }
+
+        public FloodRisk? FindRiskOverlayForPoint(GeoPoint point) => null;
     }
 
     private sealed class OutsideZoneGeocodingService : IGeocodingService

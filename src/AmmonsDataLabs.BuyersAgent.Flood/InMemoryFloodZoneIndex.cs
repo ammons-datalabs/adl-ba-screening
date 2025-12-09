@@ -29,6 +29,12 @@ public sealed class InMemoryFloodZoneIndex(IEnumerable<FloodZone> zones) : IFloo
         return best;
     }
 
+    public FloodRisk? FindRiskOverlayForPoint(GeoPoint point)
+    {
+        var zone = FindZoneForPoint(point);
+        return zone?.Risk;
+    }
+
     public FloodZoneHit? FindNearestZone(GeoPoint point, double maxDistanceMetres)
     {
         if (_zones.Count == 0)

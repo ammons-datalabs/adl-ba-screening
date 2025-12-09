@@ -44,4 +44,22 @@ public sealed class FloodSummary
     /// Combines reasons from the lookup result.
     /// </summary>
     public string? Notes { get; init; }
+
+    /// <summary>
+    /// True when property intersects a flood extent but has no parcel/plan metrics
+    /// and no classified FPA risk. Indicates a council data gap requiring manual review.
+    /// </summary>
+    public bool IsDataGap { get; init; }
+
+    /// <summary>
+    /// Distance in metres to nearest flood extent, when property is nearby but outside.
+    /// Null when inside an extent or no extent found within search radius.
+    /// </summary>
+    public double? NearbyDistanceMetres { get; init; }
+
+    /// <summary>
+    /// True if the location is outside Brisbane City Council coverage area.
+    /// We only have flood data for BCC properties.
+    /// </summary>
+    public bool IsOutsideCoverageArea { get; init; }
 }

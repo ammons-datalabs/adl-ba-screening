@@ -10,6 +10,13 @@ public class LotPlanPartsTests
     [InlineData("1RP84382", "1", "RP84382")]
     [InlineData("20SP191298", "20", "SP191298")]
     [InlineData("90RP851746", "90", "RP851746")]
+    // Letter lot plans (strata/community title common property)
+    [InlineData("ASP279272", "A", "SP279272")]
+    [InlineData("ARP100086", "A", "RP100086")]
+    [InlineData("LSP209244", "L", "SP209244")]
+    [InlineData("ABSP12345", "AB", "SP12345")]
+    [InlineData("HSP111909", "H", "SP111909")]
+    [InlineData("2SP245995", "2", "SP245995")]
     public void Parse_SplitsCorrectly(string lotplan, string expectedLot, string expectedPlan)
     {
         var parts = LotPlanParts.Parse(lotplan);

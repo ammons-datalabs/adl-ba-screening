@@ -11,33 +11,57 @@ public sealed class BccFloodZoneIndex(
 {
     private readonly IFloodZoneDataLoader _loader = loader ?? throw new ArgumentNullException(nameof(loader));
     private readonly FloodDataOptions _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
-    private readonly object _sync = new();
-    private InMemoryFloodZoneIndex? _inner;
+    private readonly object _extentsSync = new();
+    private readonly object _riskSync = new();
+    private InMemoryFloodZoneIndex? _extentsIndex;
+    private InMemoryFloodZoneIndex? _riskIndex;
 
     public FloodZone? FindZoneForPoint(GeoPoint point)
     {
-        EnsureLoaded();
-        return _inner!.FindZoneForPoint(point);
+        EnsureExtentsLoaded();
+        return _extentsIndex!.FindZoneForPoint(point);
     }
 
     public FloodZoneHit? FindNearestZone(GeoPoint point, double maxDistanceMetres)
     {
-        EnsureLoaded();
-        return _inner!.FindNearestZone(point, maxDistanceMetres);
+        EnsureExtentsLoaded();
+        return _extentsIndex!.FindNearestZone(point, maxDistanceMetres);
     }
 
-    private void EnsureLoaded()
+    public FloodRisk? FindRiskOverlayForPoint(GeoPoint point)
     {
-        if (_inner is not null)
+        EnsureRiskLoaded();
+        var zone = _riskIndex!.FindZoneForPoint(point);
+        return zone?.Risk;
+    }
+
+    private void EnsureExtentsLoaded()
+    {
+        if (_extentsIndex is not null)
             return;
 
-        lock (_sync)
+        lock (_extentsSync)
         {
-            if (_inner is not null)
+            if (_extentsIndex is not null)
                 return;
 
             var zones = _loader.LoadZones(_options, CancellationToken.None);
-            _inner = new InMemoryFloodZoneIndex(zones);
+            _extentsIndex = new InMemoryFloodZoneIndex(zones);
+        }
+    }
+
+    private void EnsureRiskLoaded()
+    {
+        if (_riskIndex is not null)
+            return;
+
+        lock (_riskSync)
+        {
+            if (_riskIndex is not null)
+                return;
+
+            var zones = _loader.LoadRiskZones(_options, CancellationToken.None);
+            _riskIndex = new InMemoryFloodZoneIndex(zones);
         }
     }
 }

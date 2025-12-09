@@ -62,7 +62,7 @@ public class FloodSummaryMapperTests
         var summary = FloodSummaryMapper.FromResult(result);
 
         Assert.Equal("Unknown", summary.OverallRisk);
-        Assert.Equal("No mapped flood risk", summary.RiskLabel); // No extent intersection = no flood data
+        Assert.Equal("No mapped flood extent", summary.RiskLabel); // No extent intersection = no flood data
         Assert.Equal("Unknown", summary.Source);
         Assert.False(summary.HasFloodInfo);
     }
@@ -137,9 +137,10 @@ public class FloodSummaryMapperTests
         var summary = FloodSummaryMapper.FromResult(result);
 
         Assert.Equal("Unknown", summary.OverallRisk);
-        Assert.Equal("Check manually", summary.RiskLabel); // Extent intersection = actionable label
+        Assert.Equal("Unclassified extent", summary.RiskLabel); // Extent intersection = data gap label
         Assert.Equal("Point Buffer (30m)", summary.Source);
         Assert.True(summary.HasFloodInfo); // Key assertion: HasFloodInfo is true despite Unknown risk
+        Assert.True(summary.IsDataGap); // Key assertion: IsDataGap is true for unclassified extent
         Assert.Contains("unclassified flood extent", summary.Notes);
     }
 
@@ -160,8 +161,9 @@ public class FloodSummaryMapperTests
         var summary = FloodSummaryMapper.FromResult(result);
 
         Assert.Equal("Unknown", summary.OverallRisk);
-        Assert.Equal("No mapped flood risk", summary.RiskLabel);
+        Assert.Equal("No mapped flood extent", summary.RiskLabel);
         Assert.False(summary.HasFloodInfo); // No extent intersection = no flood info
+        Assert.False(summary.IsDataGap); // No extent intersection = not a data gap
     }
 
     [Fact]
