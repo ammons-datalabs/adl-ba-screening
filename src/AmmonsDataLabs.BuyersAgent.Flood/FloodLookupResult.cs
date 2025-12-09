@@ -24,4 +24,10 @@ public class FloodLookupResult
     /// are inside mapped flood areas but lack risk classification.
     /// </summary>
     public bool HasAnyExtentIntersection { get; init; }
+
+    /// <summary>
+    /// True if the geocoded location is outside the coverage area (BCC LGA).
+    /// We only have flood data for Brisbane City Council properties.
+    /// </summary>
+    public bool IsOutsideCoverageArea { get; init; }
 }

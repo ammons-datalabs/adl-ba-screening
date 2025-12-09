@@ -5,6 +5,7 @@ namespace AmmonsDataLabs.BuyersAgent.Flood;
 /// <summary>
 /// Hybrid flood data provider that uses a tiered lookup strategy:
 /// - Tier 1: Precomputed parcel metrics (lotplan -> metrics, with plan fallback). Currently BCC only.
+/// - Tier 1.5: Reverse lot plan lookup from coordinates when geocoder doesn't provide lot plan.
 /// - Tier 2: Runtime parcel boundary intersection with flood extents. NOT YET IMPLEMENTED.
 /// Intended for councils outside BCC (e.g., Ipswich, Logan) where precomputed metrics unavailable.
 /// - Tier 3: Point-buffer proximity to flood zones. Fallback when Tier 1/2 unavailable.
@@ -13,10 +14,12 @@ namespace AmmonsDataLabs.BuyersAgent.Flood;
 public sealed class HybridFloodDataProvider(
     IGeocodingService geocoding,
     IBccParcelMetricsIndex metricsIndex,
-    IFloodZoneIndex zoneIndex)
+    IFloodZoneIndex zoneIndex,
+    ILotPlanLookup lotPlanLookup)
     : IFloodDataProvider
 {
     private const double DefaultBufferMetres = 30.0;
+    private const double LotPlanLookupMaxDistanceMetres = 40.0;
 
     private readonly IGeocodingService _geocoding = geocoding ?? throw new ArgumentNullException(nameof(geocoding));
 
@@ -24,6 +27,8 @@ public sealed class HybridFloodDataProvider(
         metricsIndex ?? throw new ArgumentNullException(nameof(metricsIndex));
 
     private readonly IFloodZoneIndex _zoneIndex = zoneIndex ?? throw new ArgumentNullException(nameof(zoneIndex));
+
+    private readonly ILotPlanLookup _lotPlanLookup = lotPlanLookup ?? throw new ArgumentNullException(nameof(lotPlanLookup));
 
     public async Task<FloodLookupResult> LookupAsync(
         string address,
@@ -51,12 +56,41 @@ public sealed class HybridFloodDataProvider(
                 Reasons = [$"Geocoding failed: {geo.Status}"]
             };
 
-        // Tier 1: BCC parcel metrics (if lotplan available)
+        // Check if location is outside BCC coverage area
+        if (geo.Location is not null && !BccBoundaryChecker.IsInsideBccBounds(geo.Location.Value))
+            return new FloodLookupResult
+            {
+                Address = geo.NormalizedAddress ?? address,
+                Risk = FloodRisk.Unknown,
+                Source = FloodDataSource.Unknown,
+                Scope = FloodDataScope.Unknown,
+                IsOutsideCoverageArea = true,
+                Reasons = ["Location is outside Brisbane City Council coverage area. This tool only has flood data for BCC properties."]
+            };
+
+        // Tier 1: BCC parcel metrics (if lotplan available from geocoder)
         if (!string.IsNullOrEmpty(geo.LotPlan))
         {
-            var tier1Result = TryTier1Lookup(geo);
+            var tier1Result = TryTier1Lookup(geo, geo.LotPlan);
             if (tier1Result is not null)
                 return tier1Result;
+        }
+
+        // Tier 1.5: Reverse lot plan lookup from coordinates
+        // Used when geocoder (e.g., Azure Maps) returns lat/lon but no lot plan
+        if (string.IsNullOrEmpty(geo.LotPlan) && geo.Location is not null)
+        {
+            var reverseLotPlan = _lotPlanLookup.FindLotPlan(
+                geo.Location.Value.Latitude,
+                geo.Location.Value.Longitude,
+                LotPlanLookupMaxDistanceMetres);
+
+            if (!string.IsNullOrEmpty(reverseLotPlan))
+            {
+                var tier15Result = TryTier1Lookup(geo, reverseLotPlan);
+                if (tier15Result is not null)
+                    return tier15Result;
+            }
         }
 
         // Tier 2: Runtime parcel boundary intersection (for Ipswich, Logan, etc.)
@@ -75,9 +109,9 @@ public sealed class HybridFloodDataProvider(
         };
     }
 
-    private FloodLookupResult? TryTier1Lookup(GeocodingResult geo)
+    private FloodLookupResult? TryTier1Lookup(GeocodingResult geo, string lotPlan)
     {
-        if (!_metricsIndex.TryGet(geo.LotPlan!, out var metrics))
+        if (!_metricsIndex.TryGet(lotPlan, out var metrics))
             return null;
 
         var scope = metrics.Scope == MetricsScope.Parcel
@@ -90,7 +124,7 @@ public sealed class HybridFloodDataProvider(
         {
             var scopeDescription = scope == FloodDataScope.PlanFallback
                 ? $"(plan-level fallback for {metrics.Plan})"
-                : $"(parcel: {geo.LotPlan})";
+                : $"(parcel: {lotPlan})";
 
             reasons.Add($"Risk derived from BCC parcel metrics {scopeDescription}.");
 
@@ -111,7 +145,7 @@ public sealed class HybridFloodDataProvider(
         }
 
         // Property exists in BCC data but has no flood info = confirmed no flood
-        reasons.Add($"BCC parcel metrics indicate no flood risk for {geo.LotPlan}.");
+        reasons.Add($"BCC parcel metrics indicate no flood risk for {lotPlan}.");
 
         return new FloodLookupResult
         {
@@ -141,28 +175,39 @@ public sealed class HybridFloodDataProvider(
             };
 
         var isInside = hit.Proximity == FloodZoneProximity.Inside;
+        var risk = hit.Zone.Risk;
+        var reasons = new List<string>();
 
-        string reason;
         switch (isInside)
         {
-            case true when hit.Zone.Risk == FloodRisk.Unknown:
-                // Consolidated message for unclassified flood extents
-                reason = "Property is inside an unclassified flood extent (point buffer). Manual FloodWise check recommended.";
+            // If inside an unclassified extent, try the risk overlay for a classified risk
+            case true when risk == FloodRisk.Unknown:
+            {
+                var overlayRisk = _zoneIndex.FindRiskOverlayForPoint(geo.Location!.Value);
+                if (overlayRisk is not null && overlayRisk != FloodRisk.Unknown)
+                {
+                    risk = overlayRisk.Value;
+                    reasons.Add($"Location falls inside {risk} likelihood flood zone (point buffer with risk overlay).");
+                }
+                else
+                {
+                    reasons.Add("Property is inside an unclassified flood extent (point buffer). Manual FloodWise check recommended.");
+                }
+
                 break;
+            }
             case true:
-                reason = $"Location falls inside {hit.Zone.Risk} likelihood flood zone (point buffer).";
+                reasons.Add($"Location falls inside {risk} likelihood flood zone (point buffer).");
                 break;
             default:
-                reason = $"Location is {hit.DistanceMetres:F1}m from {hit.Zone.Risk} likelihood flood zone (point buffer).";
+                reasons.Add($"Location is {hit.DistanceMetres:F1}m from {risk} likelihood flood zone (point buffer).");
                 break;
         }
-
-        var reasons = new List<string> { reason };
 
         return new FloodLookupResult
         {
             Address = geo.NormalizedAddress ?? geo.Query,
-            Risk = hit.Zone.Risk,
+            Risk = risk,
             Proximity = hit.Proximity,
             DistanceMetres = hit.DistanceMetres > 0 ? hit.DistanceMetres : null,
             Reasons = reasons.ToArray(),

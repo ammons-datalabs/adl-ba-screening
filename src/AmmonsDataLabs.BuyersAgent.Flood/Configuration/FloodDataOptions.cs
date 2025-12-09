@@ -17,4 +17,9 @@ public sealed class FloodDataOptions
     /// Path (relative to DataRoot) for BCC plan-level metrics NDJSON file.
     /// </summary>
     public string BccParcelMetricsPlanFile { get; init; } = "bcc/plan-metrics.ndjson";
+
+    /// <summary>
+    /// Path (relative to DataRoot) for address points NDJSON file used for reverse lot plan lookup.
+    /// </summary>
+    public string AddressesFile { get; init; } = "bcc/addresses.ndjson";
 }

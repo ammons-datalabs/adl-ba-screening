@@ -152,6 +152,18 @@
             padding: 4px 8px;
             border-radius: 4px;
         }
+        .data-gap-badge {
+            display: inline-block;
+            background: #ff9800;
+            color: white;
+            font-size: 10px;
+            font-weight: 600;
+            padding: 2px 6px;
+            border-radius: 3px;
+            margin-left: 6px;
+            vertical-align: middle;
+            cursor: help;
+        }
         .reasons {
             font-size: 12px;
             color: #666;
@@ -345,16 +357,21 @@
 
             <h4>Understanding the Risk Column</h4>
             <ul>
-                <li><strong>High / Medium / Low / None</strong> - Lot-specific risk level from BCC data.</li>
+                <li><strong>High / Medium / Low / None</strong> - Lot-specific risk level from BCC parcel metrics.</li>
                 <li><strong>High* / Medium* / Low*</strong> - Risk marked with <strong>*</strong> is a plan-level estimate (see "Scope" above). Verify in FloodWise.</li>
-                <li><strong>Check manually</strong> - Property is inside a flood extent but we couldn't determine the specific risk level. Verify in FloodWise.</li>
+                <li><strong>High^ / Medium^ / Low^</strong> - Risk marked with <strong>^</strong> is from point-based flood zone overlay (not parcel-specific). Less precise than lot-specific data. Verify in FloodWise.</li>
+                <li><strong>Unclassified extent</strong> - Property intersects a mapped flood extent, but council has not assigned an FPA1-FPA4 risk classification. Often associated with overland flow or creek areas. <em>Manual FloodWise Property Report recommended.</em></li>
+                <li><strong>Near extent (Xm)</strong> - Property is within 30m of a flood extent but not inside it. The distance shown is from the geocoded point to the nearest extent boundary. Lower risk than being inside, but worth noting.</li>
+                <li><strong>No mapped flood extent</strong> - No flood extent found within 30m search radius. This does not guarantee absence of flood risk; local checks still recommended.</li>
+                <li><strong>Outside BCC</strong> - Property is outside Brisbane City Council boundaries. This tool only has flood data for BCC properties. Check the relevant council's flood mapping tool.</li>
             </ul>
 
             <h4>Known Limitations</h4>
             <ul>
                 <li><strong>Plan-level results (*) may overstate risk</strong> - If we don't have lot-specific BCC metrics, we use plan-level data which shows the highest risk across all lots in that plan.</li>
-                <li><strong>Point Buffer shows "Unknown" risk</strong> - We can detect flood extent proximity but not determine High/Medium/Low without parcel geometry intersection (coming soon).</li>
-                <li><strong>Geocoding accuracy</strong> - Address matching depends on Google geocoding. Unusual addresses may geocode incorrectly.</li>
+                <li><strong>Point Buffer results (^) are coordinate-based</strong> - Risk is determined by the geocoded point, not the actual parcel boundary. May be less accurate for large lots or unusual parcel shapes.</li>
+                <li><strong>Unclassified extents are data gaps</strong> - Some flood extents (especially overland flow areas) don't have FPA risk classifications in BCC's spatial data. These require manual verification via FloodWise Property Report.</li>
+                <li><strong>Geocoding accuracy</strong> - Address matching depends on Azure geocoding. Unusual addresses may geocode incorrectly.</li>
             </ul>
         </div>
     </div>
@@ -401,21 +418,39 @@
     </div>
 
     <script>
-        // Sort order: lowest risk first, Unknown with flood info treated as high risk
-        // None=0, Low=1, Medium=2, High=3, Unknown(with flood info)=4
+        // Sort order: lowest risk first
+        // None=0, Low=1, Medium=2, High=3
+        // Unknown with isDataGap (inside unclassified extent)=4
+        // Unknown with nearbyDistanceMetres (near but outside)=5
+        // Unknown with no flood data at all=6
         const riskOrder = { 'None': 0, 'Low': 1, 'Medium': 2, 'High': 3, 'Unknown': 4 };
         let currentAnomalyResult = null;
 
         function getSortKey(result) {
-            // Unknown with hasFloodInfo should sort as worst case (after High)
-            if (result.overallRisk === 'Unknown' && result.hasFloodInfo) {
-                return 4; // After High (3)
+            // Outside BCC coverage = sort at very end (not actionable with this tool)
+            if (result.isOutsideCoverageArea) {
+                return 7;
             }
-            // Unknown without flood info (e.g., geocoding failure) sorts at the end
-            if (result.overallRisk === 'Unknown') {
-                return 5;
+
+            // Known risks sort by risk level
+            if (result.overallRisk !== 'Unknown') {
+                return riskOrder[result.overallRisk] ?? 6;
             }
-            return riskOrder[result.overallRisk] ?? 5;
+
+            // Unknown + isDataGap (inside unclassified extent) = worst Unknown case
+            if (result.isDataGap) {
+                return 4;
+            }
+
+            // Unknown + nearbyDistanceMetres (near extent but outside) = medium Unknown case
+            // Sort by distance: closer = higher risk within this tier
+            if (result.nearbyDistanceMetres != null) {
+                // 5.0 to 5.99 based on distance (0m = 5.0, 30m = 5.99)
+                return 5 + (result.nearbyDistanceMetres / 3000);
+            }
+
+            // Unknown with no extent found at all = lowest concern
+            return 6;
         }
 
         async function checkFloodRisk() {
@@ -481,7 +516,10 @@
             tbody.innerHTML = results.map((r, idx) => `
                 <tr>
                     <td>${escapeHtml(r.address)}</td>
-                    <td><span class="risk-${(r.overallRisk || 'unknown').toLowerCase()}">${escapeHtml(r.riskLabel)}</span></td>
+                    <td>
+                        <span class="risk-${(r.overallRisk || 'unknown').toLowerCase()}">${escapeHtml(r.riskLabel)}</span>
+                        ${r.isDataGap ? '<span class="data-gap-badge" title="Council data gap - manual FloodWise check required">Data Gap</span>' : ''}
+                    </td>
                     <td>${escapeHtml(r.source || '-')}</td>
                     <td>${escapeHtml(r.scope || '-')}</td>
                     <td class="reasons">${escapeHtml(r.notes || '')}</td>

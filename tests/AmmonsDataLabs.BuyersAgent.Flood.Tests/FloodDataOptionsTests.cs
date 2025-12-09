@@ -14,5 +14,6 @@ public class FloodDataOptionsTests
         Assert.Equal("bcc/flood-risk.ndjson", options.OverallRiskFile);
         Assert.Equal("bcc/parcel-metrics.ndjson", options.BccParcelMetricsParcelFile);
         Assert.Equal("bcc/plan-metrics.ndjson", options.BccParcelMetricsPlanFile);
+        Assert.Equal("bcc/addresses.ndjson", options.AddressesFile);
     }
 }

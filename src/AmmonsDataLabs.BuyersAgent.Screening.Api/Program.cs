@@ -27,11 +27,12 @@ var useGisProvider = builder.Configuration.GetValue<bool>("Flood:UseGisProvider"
 
 if (useGisProvider)
 {
-    // GIS-based flood data provider: Tier 1 BCC parcel metrics + Tier 3 point buffer fallback
+    // GIS-based flood data provider: Tier 1 BCC parcel metrics + Tier 1.5 reverse lotplan lookup + Tier 3 point buffer fallback
     builder.Services.AddGeocoding(builder.Configuration);
     builder.Services.AddSingleton<IFloodZoneDataLoader, NdjsonFloodZoneDataLoader>();
     builder.Services.AddSingleton<IFloodZoneIndex, BccFloodZoneIndex>();
     builder.Services.AddSingleton<IBccParcelMetricsIndex, NdjsonBccParcelMetricsIndex>();
+    builder.Services.AddSingleton<ILotPlanLookup, AddressBasedLotPlanLookup>();
     builder.Services.AddScoped<IFloodDataProvider, HybridFloodDataProvider>();
 }
 else

@@ -16,12 +16,22 @@ public sealed class NdjsonFloodZoneDataLoader : IFloodZoneDataLoader
     public IReadOnlyList<FloodZone> LoadZones(FloodDataOptions options, CancellationToken cancellationToken = default)
     {
         var extentsPath = Path.Combine(options.DataRoot, options.ExtentsFile);
+        return LoadZonesFromFile(extentsPath, cancellationToken);
+    }
 
-        if (!File.Exists(extentsPath)) return [];
+    public IReadOnlyList<FloodZone> LoadRiskZones(FloodDataOptions options, CancellationToken cancellationToken = default)
+    {
+        var riskPath = Path.Combine(options.DataRoot, options.OverallRiskFile);
+        return LoadZonesFromFile(riskPath, cancellationToken);
+    }
+
+    private static IReadOnlyList<FloodZone> LoadZonesFromFile(string filePath, CancellationToken cancellationToken)
+    {
+        if (!File.Exists(filePath)) return [];
 
         var zones = new List<FloodZone>();
 
-        foreach (var line in File.ReadLines(extentsPath))
+        foreach (var line in File.ReadLines(filePath))
         {
             cancellationToken.ThrowIfCancellationRequested();
 

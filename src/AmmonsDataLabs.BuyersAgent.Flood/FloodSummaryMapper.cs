@@ -16,6 +16,15 @@ public static class FloodSummaryMapper
 
         var riskLabel = ComputeRiskLabel(result);
 
+        // IsDataGap: property intersects flood extent but has no parcel/plan metrics
+        // and no classified FPA risk (e.g., overland flow areas like 5 Bellambi Place)
+        var isDataGap = result.HasAnyExtentIntersection &&
+                        result.Source != FloodDataSource.BccParcelMetrics &&
+                        result.Risk == FloodRisk.Unknown;
+
+        // NearbyDistanceMetres: populated when property is near (but outside) a flood extent
+        var nearbyDistance = result.Proximity == FloodZoneProximity.Near ? result.DistanceMetres : null;
+
         return new FloodSummary
         {
             Address = result.Address,
@@ -24,12 +33,19 @@ public static class FloodSummaryMapper
             HasFloodInfo = hasFloodInfo,
             Source = FormatSource(result.Source),
             Scope = FormatScope(result.Scope),
-            Notes = result.Reasons.Length > 0 ? string.Join(" ", result.Reasons) : null
+            Notes = result.Reasons.Length > 0 ? string.Join(" ", result.Reasons) : null,
+            IsDataGap = isDataGap,
+            NearbyDistanceMetres = nearbyDistance,
+            IsOutsideCoverageArea = result.IsOutsideCoverageArea
         };
     }
 
     private static string ComputeRiskLabel(FloodLookupResult result)
     {
+        // Outside BCC coverage area
+        if (result.IsOutsideCoverageArea)
+            return "Outside BCC";
+
         // Known risk from BCC parcel metrics
         if (result.Source == FloodDataSource.BccParcelMetrics && result.Risk != FloodRisk.Unknown)
         {
@@ -37,10 +53,24 @@ public static class FloodSummaryMapper
             return result.Scope == FloodDataScope.PlanFallback ? $"{result.Risk}*" : result.Risk.ToString();
         }
 
-        // Inside a flood extent but no classified risk (e.g., 5 Bellambi Place)
-        return result.HasAnyExtentIntersection ? "Check manually" :
-            // No flood data available
-            "No mapped flood risk";
+        // Point Buffer with classified risk from overlay (e.g., 222 Margaret Street)
+        if (result.Source == FloodDataSource.PointBuffer && result.Risk != FloodRisk.Unknown && result.Risk != FloodRisk.None)
+        {
+            // Mark with ^ to indicate it's from risk overlay (less reliable than parcel-level)
+            return $"{result.Risk}^";
+        }
+
+        // Inside a flood extent but no classified risk (e.g., 5 Bellambi Place - overland flow)
+        // This is a data gap: council has extent data but no FPA1-4 classification
+        if (result.HasAnyExtentIntersection)
+            return "Unclassified extent";
+
+        // Near (but outside) a flood extent - show distance
+        if (result.Proximity == FloodZoneProximity.Near && result.DistanceMetres.HasValue)
+            return $"Near extent ({result.DistanceMetres.Value:F0}m)";
+
+        // No flood extent intersection at all
+        return "No mapped flood extent";
     }
 
     private static string FormatSource(FloodDataSource source)
