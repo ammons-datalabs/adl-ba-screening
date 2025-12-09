@@ -387,6 +387,99 @@ public class HybridFloodDataProviderTests
     }
 
     [Fact]
+    public async Task Lookup_UsesTier15ReverseLookup_WhenGeocoderReturnsNoLotPlan()
+    {
+        // Geocoder returns location but no lot plan
+        // Reverse lookup finds a lot plan that has metrics
+        var geocoder = new StubGeocoder("100 Test St, Brisbane", null);
+        var metricsIndex = new StubMetricsIndex(
+            "1RP12345",
+            new BccMetricsSnapshot
+            {
+                LotPlanOrPlanKey = "1RP12345",
+                Plan = "RP12345",
+                OverallRisk = FloodRisk.Medium,
+                HasFloodInfo = true,
+                Scope = MetricsScope.Parcel,
+                EvidenceMetrics = ["FL_MEDIUM_RIVER"]
+            });
+
+        var lotPlanLookup = new StubLotPlanLookup("1RP12345");
+
+        var provider = new HybridFloodDataProvider(geocoder, metricsIndex, new StubFloodZoneIndex(null), lotPlanLookup);
+
+        var result = await provider.LookupAsync("100 Test St, Brisbane");
+
+        Assert.Equal(FloodRisk.Medium, result.Risk);
+        Assert.Equal(FloodDataSource.BccParcelMetrics, result.Source);
+    }
+
+    [Fact]
+    public async Task Lookup_FallsToTier3_WhenReverseLookupFindsNoLotPlan()
+    {
+        // Geocoder returns location but no lot plan
+        // Reverse lookup also finds nothing
+        var geocoder = new StubGeocoder("200 Remote St", null);
+        var metricsIndex = new StubMetricsIndex();
+
+        var polygon = GeoFactory.CreatePolygon(
+            new GeoPoint(-27.48, 153.00),
+            new GeoPoint(-27.48, 153.05),
+            new GeoPoint(-27.45, 153.05),
+            new GeoPoint(-27.45, 153.00));
+
+        var zone = new FloodZone
+        {
+            Id = "zone-1",
+            Risk = FloodRisk.Low,
+            Geometry = polygon
+        };
+
+        var zoneIndex = new StubFloodZoneIndex(zone);
+        var lotPlanLookup = new StubLotPlanLookup(null); // Returns nothing
+
+        var provider = new HybridFloodDataProvider(geocoder, metricsIndex, zoneIndex, lotPlanLookup);
+
+        var result = await provider.LookupAsync("200 Remote St");
+
+        // Falls through to Tier 3
+        Assert.Equal(FloodRisk.Low, result.Risk);
+        Assert.Equal(FloodDataSource.PointBuffer, result.Source);
+    }
+
+    [Fact]
+    public async Task Lookup_FallsToTier3_WhenReverseLookupFindsLotPlanButNoMetrics()
+    {
+        // Reverse lookup finds a lot plan, but metrics index has no data for it
+        var geocoder = new StubGeocoder("300 New Development Ave", null);
+        var metricsIndex = new StubMetricsIndex(); // Empty - no metrics for any lot plan
+
+        var polygon = GeoFactory.CreatePolygon(
+            new GeoPoint(-27.48, 153.00),
+            new GeoPoint(-27.48, 153.05),
+            new GeoPoint(-27.45, 153.05),
+            new GeoPoint(-27.45, 153.00));
+
+        var zone = new FloodZone
+        {
+            Id = "zone-1",
+            Risk = FloodRisk.High,
+            Geometry = polygon
+        };
+
+        var zoneIndex = new StubFloodZoneIndex(zone);
+        var lotPlanLookup = new StubLotPlanLookup("999XYZ999"); // Finds lot plan but no metrics exist
+
+        var provider = new HybridFloodDataProvider(geocoder, metricsIndex, zoneIndex, lotPlanLookup);
+
+        var result = await provider.LookupAsync("300 New Development Ave");
+
+        // Falls through to Tier 3
+        Assert.Equal(FloodRisk.High, result.Risk);
+        Assert.Equal(FloodDataSource.PointBuffer, result.Source);
+    }
+
+    [Fact]
     public async Task Lookup_StillReturnsUnknown_WhenOverlayHasNoClassifiedRisk()
     {
         // When overlay also returns null, should still recommend manual check
