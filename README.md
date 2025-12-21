@@ -2,6 +2,12 @@
 
 Buyer's Agent property screening API for Ammons Data Labs. Provides flood risk assessment and other property screening services for Queensland properties.
 
+
+> **Status: On hold**  
+> Development is paused.  
+> The repository is kept for reference; issues and PRs are not being actively monitored.
+
+
 [![CI](https://github.com/ammons-datalabs/adl-ba-screening/actions/workflows/ci.yml/badge.svg)](https://github.com/ammons-datalabs/adl-ba-screening/actions/workflows/ci.yml)
 [![codecov](https://codecov.io/gh/ammons-datalabs/adl-ba-screening/branch/main/graph/badge.svg)](https://codecov.io/gh/ammons-datalabs/adl-ba-screening)
 
